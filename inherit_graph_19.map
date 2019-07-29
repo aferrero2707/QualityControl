@@ -1,0 +1,10 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classo2_1_1quality__control_1_1core_1_1TaskInterface.html" title="Skeleton of a QC task. " alt="" coords="5,201,148,243"/>
+<area shape="rect" id="node2" href="$classo2_1_1quality__control_1_1test_1_1TestTask.html" title="o2::quality_control\l::test::TestTask" alt="" coords="251,5,379,47"/>
+<area shape="rect" id="node3" href="$classo2_1_1quality__control__modules_1_1daq_1_1DaqTask.html" title="Example Quality Control Task It is final because there is no reason to derive from it..." alt="" coords="231,71,399,112"/>
+<area shape="rect" id="node4" href="$classo2_1_1quality__control__modules_1_1emcal_1_1DigitsQcTask.html" title="QC Task for EMCAL digits. " alt="" coords="211,136,420,177"/>
+<area shape="rect" id="node5" href="$classo2_1_1quality__control__modules_1_1example_1_1BenchmarkTask.html" title="Quality Control Task for benchmarking It publishes a number of TH1F (configurable, see example.ini in module QualityControl). The histos are reset and refilled (1000 random) at EOC. They have 1000 bins. The monitoring of data blocks is empty (sleep 100 ms). " alt="" coords="196,201,435,243"/>
+<area shape="rect" id="node6" href="$classo2_1_1quality__control__modules_1_1example_1_1ExampleTask.html" title="Example Quality Control Task It is final because there is no reason to derive from it..." alt="" coords="204,267,427,308"/>
+<area shape="rect" id="node7" href="$classo2_1_1quality__control__modules_1_1skeleton_1_1SkeletonTask.html" title="Example Quality Control DPL Task It is final because there is no reason to derive from it..." alt="" coords="244,331,387,387"/>
+<area shape="rect" id="node8" href="$classo2_1_1quality__control__modules_1_1tof_1_1TOFTask.html" title="TOF Quality Control DPL Task. " alt="" coords="233,411,397,452"/>
+</map>

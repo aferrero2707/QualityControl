@@ -1,0 +1,14 @@
+<map id="Framework/src/runQC.cxx" name="Framework/src/runQC.cxx">
+<area shape="rect" id="node3" href="$InfrastructureGenerator_8h.html" title="QualityControl/Infrastructure\lGenerator.h" alt="" coords="213,80,400,121"/>
+<area shape="rect" id="node11" href="$Checker_8h.html" title="QualityControl/Checker.h" alt="" coords="1722,87,1891,114"/>
+<area shape="rect" id="node17" href="$CheckInterface_8h.html" title="QualityControl/CheckInterface.h" alt="" coords="1995,319,2205,345"/>
+<area shape="rect" id="node18" href="$MonitorObject_8h.html" title="QualityControl/MonitorObject.h" alt="" coords="2091,393,2293,420"/>
+<area shape="rect" id="node25" href="$DatabaseInterface_8h.html" title="QualityControl/DatabaseInterface.h" alt="" coords="595,319,821,345"/>
+<area shape="rect" id="node27" href="$QcInfoLogger_8h.html" title="QualityControl/QcInfoLogger.h" alt="" coords="1707,169,1906,196"/>
+<area shape="rect" id="node23" href="$Quality_8h.html" title="QualityControl/Quality.h" alt="" coords="1878,475,2039,502"/>
+<area shape="rect" id="node28" href="$TaskInterface_8h.html" title="TaskInterface.h" alt="" coords="1466,244,1579,271"/>
+<area shape="rect" id="node32" href="$Activity_8h.html" title="QualityControl/Activity.h" alt="" coords="947,319,1111,345"/>
+<area shape="rect" id="node33" href="$ObjectsManager_8h.html" title="QualityControl/ObjectsManager.h" alt="" coords="1654,319,1869,345"/>
+<area shape="rect" id="node34" href="$TaskConfig_8h.html" title="QualityControl/TaskConfig.h" alt="" coords="1677,393,1864,420"/>
+<area shape="rect" id="node35" href="$ServiceDiscovery_8h_source.html" title="QualityControl/ServiceDiscovery.h" alt="" coords="1001,393,1223,420"/>
+</map>

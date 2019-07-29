@@ -1,0 +1,6 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node2" href="$classo2_1_1quality__control_1_1checker_1_1Checker.html" title="The class in charge of running the checks on a MonitorObject. " alt="" coords="141,5,274,47"/>
+<area shape="rect" id="node3" href="$classo2_1_1quality__control_1_1core_1_1HistoMerger.html" title="A crude histogram merger for development purposes. " alt="" coords="140,71,275,112"/>
+<area shape="rect" id="node4" href="$classo2_1_1quality__control_1_1core_1_1TaskRunner.html" title="A class driving the execution of a QC task inside DPL. " alt="" coords="140,136,275,177"/>
+<area shape="rect" id="node5" href="$classo2_1_1quality__control_1_1example_1_1ExamplePrinterSpec.html" title="Example DPL task to be plugged after a QC checker. " alt="" coords="104,201,311,243"/>
+</map>

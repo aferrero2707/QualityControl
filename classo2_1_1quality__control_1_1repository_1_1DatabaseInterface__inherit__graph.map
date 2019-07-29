@@ -1,0 +1,4 @@
+<map id="o2::quality_control::repository::DatabaseInterface" name="o2::quality_control::repository::DatabaseInterface">
+<area shape="rect" id="node2" href="$classo2_1_1quality__control_1_1repository_1_1CcdbDatabase.html" title="{o2::quality_control\l::repository::CcdbDatabase\n||+ CcdbDatabase()\l+ ~CcdbDatabase()\l+ connect()\l+ connect()\l+ store()\l+ retrieve()\l+ retrieveJson()\l+ disconnect()\l+ prepareTaskDataContainer()\l+ getListOfTasksWithPublications()\l+ getPublishedObjectNames()\l+ truncate()\l+ storeStreamerInfosToFile()\l+ getCurrentTimestamp()\l+ getFutureTimestamp()\l}" alt="" coords="5,307,235,604"/>
+<area shape="rect" id="node3" href="$classo2_1_1quality__control_1_1repository_1_1MySqlDatabase.html" title="Implementation of the DatabaseInterface for MySQL. " alt="" coords="259,336,488,575"/>
+</map>

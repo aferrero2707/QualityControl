@@ -1,0 +1,16 @@
+<map id="Modules" name="Modules">
+<area shape="rect" id="node2" href="dir_6b8bd6c02904bc94839ef977dfbf16fd.html" title="Common" alt="" coords="511,27,585,75"/>
+<area shape="rect" id="node8" href="dir_bcbb2cf9a3d3d83e5515c82071a07177.html" title="Framework" alt="" coords="262,123,349,171"/>
+<area shape="rect" id="edge4-headlabel" href="dir_000004_000000.html" title="6" alt="" coords="365,132,373,147"/>
+<area shape="rect" id="node3" href="dir_b4be303506ebb37c6dc24696436a6ab8.html" title="Daq" alt="" coords="415,27,487,75"/>
+<area shape="rect" id="edge6-headlabel" href="dir_000007_000000.html" title="6" alt="" coords="359,113,367,128"/>
+<area shape="rect" id="node4" href="dir_ed80be2c367d80462ec6a6a3f0ad67d1.html" title="EMCAL" alt="" coords="319,27,391,75"/>
+<area shape="rect" id="edge1-headlabel" href="dir_000010_000000.html" title="6" alt="" coords="329,103,337,118"/>
+<area shape="rect" id="node5" href="dir_5273b6b5b4e75477d91e3579fb65d936.html" title="Example" alt="" coords="221,27,294,75"/>
+<area shape="rect" id="edge2-headlabel" href="dir_000013_000000.html" title="11" alt="" coords="285,95,300,110"/>
+<area shape="rect" id="node6" href="dir_cc72967e88078b463843b5977855e60d.html" title="Skeleton" alt="" coords="123,27,197,75"/>
+<area shape="rect" id="edge3-headlabel" href="dir_000016_000000.html" title="7" alt="" coords="253,98,261,113"/>
+<area shape="rect" id="node7" href="dir_d97bc60669e70ebe18802fd5c1c1d939.html" title="TOF" alt="" coords="27,27,99,75"/>
+<area shape="rect" id="edge5-headlabel" href="dir_000019_000000.html" title="16" alt="" coords="239,116,254,130"/>
+<area shape="rect" id="clust1" href="dir_f2541a3b18981391fa76fac5599e978a.html" alt="" coords="16,16,692,85"/>
+</map>

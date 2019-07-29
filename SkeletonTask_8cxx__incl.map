@@ -1,0 +1,11 @@
+<map id="Modules/Skeleton/src/SkeletonTask.cxx" name="Modules/Skeleton/src/SkeletonTask.cxx">
+<area shape="rect" id="node4" href="$QcInfoLogger_8h.html" title="QualityControl/QcInfoLogger.h" alt="" coords="594,95,793,121"/>
+<area shape="rect" id="node31" href="$SkeletonTask_8h.html" title="Skeleton/SkeletonTask.h" alt="" coords="401,95,569,121"/>
+<area shape="rect" id="node5" href="$TaskInterface_8h.html" title="TaskInterface.h" alt="" coords="429,169,542,196"/>
+<area shape="rect" id="node11" href="$Activity_8h.html" title="QualityControl/Activity.h" alt="" coords="63,244,227,271"/>
+<area shape="rect" id="node12" href="$ObjectsManager_8h.html" title="QualityControl/ObjectsManager.h" alt="" coords="894,244,1109,271"/>
+<area shape="rect" id="node13" href="$MonitorObject_8h.html" title="QualityControl/MonitorObject.h" alt="" coords="1039,319,1241,345"/>
+<area shape="rect" id="node18" href="$Quality_8h.html" title="QualityControl/Quality.h" alt="" coords="1239,401,1401,427"/>
+<area shape="rect" id="node21" href="$TaskConfig_8h.html" title="QualityControl/TaskConfig.h" alt="" coords="583,319,769,345"/>
+<area shape="rect" id="node22" href="$ServiceDiscovery_8h_source.html" title="QualityControl/ServiceDiscovery.h" alt="" coords="221,319,443,345"/>
+</map>

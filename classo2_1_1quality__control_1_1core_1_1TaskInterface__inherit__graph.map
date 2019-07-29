@@ -1,0 +1,9 @@
+<map id="o2::quality_control::core::TaskInterface" name="o2::quality_control::core::TaskInterface">
+<area shape="rect" id="node2" href="$classo2_1_1quality__control_1_1test_1_1TestTask.html" title="{o2::quality_control\l::test::TestTask\n|+ test\l|+ TestTask()\l+ ~TestTask()\l+ initialize()\l+ startOfActivity()\l+ startOfCycle()\l+ monitorData()\l+ endOfCycle()\l+ endOfActivity()\l+ reset()\l}" alt="" coords="5,468,133,677"/>
+<area shape="rect" id="node3" href="$classo2_1_1quality__control__modules_1_1daq_1_1DaqTask.html" title="Example Quality Control Task It is final because there is no reason to derive from it..." alt="" coords="157,468,325,677"/>
+<area shape="rect" id="node4" href="$classo2_1_1quality__control__modules_1_1emcal_1_1DigitsQcTask.html" title="QC Task for EMCAL digits. " alt="" coords="350,468,559,677"/>
+<area shape="rect" id="node5" href="$classo2_1_1quality__control__modules_1_1example_1_1BenchmarkTask.html" title="Quality Control Task for benchmarking It publishes a number of TH1F (configurable, see example.ini in module QualityControl). The histos are reset and refilled (1000 random) at EOC. They have 1000 bins. The monitoring of data blocks is empty (sleep 100 ms). " alt="" coords="583,468,822,677"/>
+<area shape="rect" id="node6" href="$classo2_1_1quality__control__modules_1_1example_1_1ExampleTask.html" title="Example Quality Control Task It is final because there is no reason to derive from it..." alt="" coords="846,453,1069,692"/>
+<area shape="rect" id="node7" href="$classo2_1_1quality__control__modules_1_1skeleton_1_1SkeletonTask.html" title="Example Quality Control DPL Task It is final because there is no reason to derive from it..." alt="" coords="1093,461,1235,685"/>
+<area shape="rect" id="node8" href="$classo2_1_1quality__control__modules_1_1tof_1_1TOFTask.html" title="TOF Quality Control DPL Task. " alt="" coords="1260,409,1447,736"/>
+</map>

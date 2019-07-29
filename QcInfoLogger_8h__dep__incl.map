@@ -1,0 +1,31 @@
+<map id="Framework/include/QualityControl/QcInfoLogger.h" name="Framework/include/QualityControl/QcInfoLogger.h">
+<area shape="rect" id="node2" href="$Checker_8h.html" title="Framework/include/Quality\lControl/Checker.h" alt="" coords="1042,95,1219,136"/>
+<area shape="rect" id="node12" href="$TaskFactory_8h.html" title="Framework/include/Quality\lControl/TaskFactory.h" alt="" coords="2877,95,3054,136"/>
+<area shape="rect" id="node13" href="$TaskRunner_8cxx.html" title="Framework/src/TaskRunner.cxx" alt="" coords="2149,191,2358,218"/>
+<area shape="rect" id="node22" href="$DatabaseFactory_8cxx.html" title="Framework/src/DatabaseFactory.cxx" alt="" coords="3078,102,3317,129"/>
+<area shape="rect" id="node23" href="$InformationService_8cxx.html" title="Framework/src/Information\lService.cxx" alt="" coords="3341,95,3520,136"/>
+<area shape="rect" id="node24" href="$MySqlDatabase_8cxx.html" title="Framework/src/MySqlDatabase.cxx" alt="" coords="3545,102,3775,129"/>
+<area shape="rect" id="node25" href="$ObjectsManager_8cxx.html" title="Framework/src/ObjectsManager.cxx" alt="" coords="3799,102,4033,129"/>
+<area shape="rect" id="node26" href="$RepositoryBenchmark_8cxx.html" title="Framework/src/Repository\lBenchmark.cxx" alt="" coords="4057,95,4233,136"/>
+<area shape="rect" id="node27" href="$testQcInfoLogger_8cxx.html" title="Framework/test/testQcInfo\lLogger.cxx" alt="" coords="4257,95,4436,136"/>
+<area shape="rect" id="node28" href="$DaqTask_8cxx.html" title="Modules/Daq/src/DaqTask.cxx" alt="" coords="4460,102,4663,129"/>
+<area shape="rect" id="node29" href="$DigitsQcTask_8cxx.html" title="Modules/EMCAL/src/Digits\lQcTask.cxx" alt="" coords="4687,95,4868,136"/>
+<area shape="rect" id="node30" href="$BenchmarkTask_8cxx.html" title="Modules/Example/src\l/BenchmarkTask.cxx" alt="" coords="4893,95,5041,136"/>
+<area shape="rect" id="node31" href="$ExampleTask_8cxx.html" title="Modules/Example/src\l/ExampleTask.cxx" alt="" coords="5065,95,5213,136"/>
+<area shape="rect" id="node32" href="$SkeletonTask_8cxx.html" title="Modules/Skeleton/src\l/SkeletonTask.cxx" alt="" coords="5237,95,5385,136"/>
+<area shape="rect" id="node33" href="$TOFTask_8cxx.html" title="Modules/TOF/src/TOFTask.cxx" alt="" coords="5409,102,5615,129"/>
+<area shape="rect" id="node3" href="$Checker_8cxx.html" title="Framework/src/Checker.cxx" alt="" coords="5,191,192,218"/>
+<area shape="rect" id="node4" href="$CheckerFactory_8cxx.html" title="Framework/src/CheckerFactory.cxx" alt="" coords="217,191,447,218"/>
+<area shape="rect" id="node5" href="$runBasic_8cxx.html" title="This is an executable showing QC Task&#39;s usage in Data Processing Layer. " alt="" coords="472,191,661,218"/>
+<area shape="rect" id="node6" href="$runMergerTest_8cxx.html" title="This is DPL workflow to see HistoMerger in action. " alt="" coords="686,191,909,218"/>
+<area shape="rect" id="node7" href="$runQC_8cxx.html" title="This is an executable which generates a QC topology given a configuration file. " alt="" coords="933,191,1109,218"/>
+<area shape="rect" id="node8" href="$testChecker_8cxx.html" title="Framework/test/testChecker.cxx" alt="" coords="1133,191,1347,218"/>
+<area shape="rect" id="node9" href="$testWorkflow_8cxx.html" title="Framework/test/testWorkflow.cxx" alt="" coords="1371,191,1589,218"/>
+<area shape="rect" id="node11" href="$runTOF_8cxx.html" title="This is an executable showing QC Task&#39;s usage in Data Processing Layer. " alt="" coords="1929,191,2125,218"/>
+<area shape="rect" id="node14" href="$testTaskInterface_8cxx.html" title="Framework/test/testTaskInterface.cxx" alt="" coords="2382,191,2626,218"/>
+<area shape="rect" id="node15" href="$testQcDaq_8cxx.html" title="Modules/Daq/test/testQcDaq.cxx" alt="" coords="2650,191,2867,218"/>
+<area shape="rect" id="node16" href="$testEMCAL_8cxx.html" title="Modules/EMCAL/test\l/testEMCAL.cxx" alt="" coords="2892,184,3039,225"/>
+<area shape="rect" id="node18" href="$testQcExample_8cxx.html" title="Modules/Example/test\l/testQcExample.cxx" alt="" coords="3239,184,3391,225"/>
+<area shape="rect" id="node20" href="$testQcSkeleton_8cxx.html" title="Modules/Skeleton/test\l/testQcSkeleton.cxx" alt="" coords="3591,184,3743,225"/>
+<area shape="rect" id="node21" href="$testTOF_8cxx.html" title="Modules/TOF/test/testTOF.cxx" alt="" coords="3767,191,3971,218"/>
+</map>

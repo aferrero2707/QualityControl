@@ -1,0 +1,6 @@
+<map id="FairMQDevice" name="FairMQDevice">
+<area shape="rect" id="node2" href="$classInformationService.html" title="Collect the list of objects published by all the tasks and make it available to clients. " alt="" coords="5,153,171,289"/>
+<area shape="rect" id="node3" href="$classInformationServiceDump.html" title="Dump the publications received from the InformationService. " alt="" coords="195,167,389,274"/>
+<area shape="rect" id="node4" href="$classo2_1_1quality__control_1_1core_1_1DataDumpGui.html" title="{o2::quality_control\l::core::DataDumpGui\n|+ guiState\l+ window\l|+ DataDumpGui()\l+ ~DataDumpGui()\l# InitTask()\l# ConditionalRun()\l# handleParts()\l}" alt="" coords="413,138,560,303"/>
+<area shape="rect" id="node5" href="$classo2_1_1quality__control_1_1core_1_1RepositoryBenchmark.html" title="{o2::quality_control\l::core::RepositoryBenchmark\n||+ RepositoryBenchmark()\l+ ~RepositoryBenchmark()\l# InitTask()\l# ConditionalRun()\l# emptyDatabase()\l# checkTimedOut()\l# createHisto()\l}" alt="" coords="584,131,776,311"/>
+</map>

@@ -1,0 +1,12 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classo2_1_1quality__control_1_1checker_1_1CheckInterface.html" title="Skeleton of a check. " alt="" coords="5,280,179,321"/>
+<area shape="rect" id="node2" href="$classo2_1_1quality__control_1_1test_1_1TestCheck.html" title="o2::quality_control\l::test::TestCheck" alt="" coords="281,5,409,47"/>
+<area shape="rect" id="node3" href="$classo2_1_1quality__control__modules_1_1common_1_1MeanIsAbove.html" title="Check whether the mean of the plot is above a certain limit. " alt="" coords="233,71,457,112"/>
+<area shape="rect" id="node4" href="$classo2_1_1quality__control__modules_1_1common_1_1NonEmpty.html" title="Check whether a plot is empty or not. " alt="" coords="241,136,448,177"/>
+<area shape="rect" id="node5" href="$classo2_1_1quality__control__modules_1_1daq_1_1EverIncreasingGraph.html" title="Check whether a plot is empty or not. " alt="" coords="243,201,446,257"/>
+<area shape="rect" id="node6" href="$classo2_1_1quality__control__modules_1_1example_1_1FakeCheck.html" title="Check whether a plot is empty or not. " alt="" coords="239,280,450,321"/>
+<area shape="rect" id="node7" href="$classo2_1_1quality__control__modules_1_1skeleton_1_1SkeletonCheck.html" title="Check whether a plot is empty or not. " alt="" coords="273,345,416,401"/>
+<area shape="rect" id="node8" href="$classo2_1_1quality__control__modules_1_1tof_1_1TOFCheckRawsMulti.html" title="Check whether a plot is empty or not. " alt="" coords="241,425,448,481"/>
+<area shape="rect" id="node9" href="$classo2_1_1quality__control__modules_1_1tof_1_1TOFCheckRawsTime.html" title="Check whether a plot is empty or not. " alt="" coords="227,504,463,545"/>
+<area shape="rect" id="node10" href="$classo2_1_1quality__control__modules_1_1tof_1_1TOFCheckRawsToT.html" title="Check whether a plot is empty or not. " alt="" coords="229,569,460,611"/>
+</map>
