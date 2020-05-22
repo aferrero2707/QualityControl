@@ -80,6 +80,10 @@ void PhysicsTask::initialize(o2::framework::InitContext& /*ctx*/)
   flog = stdout; //fopen("/root/qc.log", "w");
   fprintf(stdout, "PhysicsTask initialization finished\n");
 
+  mHistogramADCamplitudeVsSize = new TH2F(TString::Format("QcMuonChambers_ADCamplitude_vs_Size"),
+      TString::Format("QcMuonChambers - ADC amplitude vs. size"), 500, 0, 500, 5000, 0, 5000);
+
+
   uint32_t dsid;
   for (int cruid = 0; cruid < 3; cruid++) {
     QcInfoLogger::GetInstance() << "JE SUIS ENTRÉ DANS LA BOUCLE CRUID " << cruid << AliceO2::InfoLogger::InfoLogger::endm;
@@ -289,7 +293,7 @@ void PhysicsTask::monitorDataDigits(const o2::framework::DataRef& input)
 
   for (auto& d : digits) {
     if (mPrintLevel >= 1) {
-      std::cout << fmt::format("  DE {:4d}  PAD {:5d}  ADC {:6d}  TIME {:4d}", d.getDetID(), d.getPadID(), d.getADC(), d.getTimeStamp());
+      std::cout << fmt::format("  DE {:4d}  PAD {:5d}  ADC {:6d}  TIME {:4d}", d.getDetID(), d.getPadID(), d.getADC(), d.getTime().sampaTime);
       std::cout << std::endl;
     }
     plotDigit(d);
@@ -307,10 +311,17 @@ void PhysicsTask::monitorDataPreclusters(o2::framework::ProcessingContext& ctx)
   std::cout<<"preClusters.size()="<<preClusters.size()<<std::endl;
   }
 
-  checkPreclusters(preClusters, digits);
+  //checkPreclusters(preClusters, digits);
 
+  bool print = false;
   for(auto& p : preClusters) {
-    plotPrecluster(p, digits);
+    if (!plotPrecluster(p, digits)) {
+      print = true;
+    }
+  }
+
+  if (print) {
+    printPreclusters(preClusters, digits);
   }
   //for (uint32_t i = 0; i < digits.size(); i++) {
   //  o2::mch::Digit& digit = digits[i];
@@ -329,6 +340,7 @@ void PhysicsTask::monitorData(o2::framework::ProcessingContext& ctx)
       //mHistogramNhits[i]->Write();
       //mHistogramADCamplitude[i]->Write();
     }
+    mHistogramADCamplitudeVsSize->Write();
     //std::cout<<"mHistogramADCamplitudeDE.size() = "<<mHistogramADCamplitudeDE.size()<<"  DEs.size()="<<DEs.size()<<std::endl;
     int nbDEs = DEs.size();
     for (int elem = 0; elem < nbDEs; elem++) {
@@ -405,6 +417,7 @@ void PhysicsTask::monitorData(o2::framework::ProcessingContext& ctx)
 void PhysicsTask::plotDigit(const o2::mch::Digit& digit)
 {
   int ADC = digit.getADC();
+  //int size = digit.getSize();
   int de = digit.getDetID();
   int padid = digit.getPadID();
 
@@ -413,6 +426,8 @@ void PhysicsTask::plotDigit(const o2::mch::Digit& digit)
   if (ADC < 0 || de < 0 || padid < 0) {
     return;
   }
+
+  //mHistogramADCamplitudeVsSize->Fill(size, ADC);
 
   try {
     const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(de);
@@ -564,6 +579,7 @@ void PhysicsTask::checkPreclusters(gsl::span<const o2::mch::PreCluster> preClust
 
       bool cathode[2] = {false, false};
       float chargeSum[2] = {0, 0};
+      float chargeMax[2] = {0, 0};
 
       int detid = preClusterDigits[0].getDetID();
       const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(detid);
@@ -576,10 +592,17 @@ void PhysicsTask::checkPreclusters(gsl::span<const o2::mch::PreCluster> preClust
         int cid = segment.isBendingPad(padid) ? 0 : 1;
         cathode[cid] = true;
         chargeSum[cid] += digit.getADC();
+
+        if (digit.getADC() > chargeMax[cid]) {
+          chargeMax[cid] = digit.getADC();
+        }
       }
 
       // filter out clusters with small charge, which are likely to be noise
       if ((chargeSum[0]+chargeSum[1]) < 100) {
+        continue;
+      }
+      if ((chargeMax[0] < 100) && (chargeMax[1] < 100)) {
         continue;
       }
 
@@ -601,7 +624,7 @@ void PhysicsTask::checkPreclusters(gsl::span<const o2::mch::PreCluster> preClust
           float Y = segment.padPositionY(d.getPadID());
           bool bend = !segment.isBendingPad(d.getPadID());
           std::cout << fmt::format("  DE {:4d}  PAD {:5d}  ADC {:6d}  TIME ({} {} {:4d})",
-              d.getDetID(), d.getPadID(), d.getADC(), d.getTime().orbit, d.getTime().bunchCrossing, d.getTimeStamp());
+              d.getDetID(), d.getPadID(), d.getADC(), d.getTime().orbit, d.getTime().bunchCrossing, d.getTime().sampaTime);
           std::cout << fmt::format("  CATHODE {}  PAD_XY {:+2.2f} , {:+2.2f}", (int)bend, X, Y);
           std::cout << std::endl;
         }
@@ -611,13 +634,59 @@ void PhysicsTask::checkPreclusters(gsl::span<const o2::mch::PreCluster> preClust
 }
 
 
-void PhysicsTask::plotPrecluster(const o2::mch::PreCluster& preCluster, gsl::span<const o2::mch::Digit> digits)
+void PhysicsTask::printPreclusters(gsl::span<const o2::mch::PreCluster> preClusters, gsl::span<const o2::mch::Digit> digits)
+{
+  std::cout<<"\n\n============\n";
+  for(auto& preCluster : preClusters) {
+    // get the digits of this precluster
+    auto preClusterDigits = digits.subspan(preCluster.firstDigit, preCluster.nDigits);
+
+    bool cathode[2] = {false, false};
+    float chargeSum[2] = {0, 0};
+    float chargeMax[2] = {0, 0};
+
+    int detid = preClusterDigits[0].getDetID();
+    const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(detid);
+
+    for ( size_t i = 0; i < preClusterDigits.size(); ++i ) {
+      const o2::mch::Digit& digit = preClusterDigits[i];
+      int padid = digit.getPadID();
+
+      // cathode index
+      int cid = segment.isBendingPad(padid) ? 0 : 1;
+      cathode[cid] = true;
+      chargeSum[cid] += digit.getADC();
+
+      if (digit.getADC() > chargeMax[cid]) {
+        chargeMax[cid] = digit.getADC();
+      }
+    }
+
+    double Xcog, Ycog;
+    CoG(preClusterDigits, Xcog, Ycog);
+
+    std::cout<<"[pre-cluster] charge = "<<chargeSum[0]<<" "<<chargeSum[1]<<"   CoG = "<<Xcog<<" "<<Ycog<<std::endl;
+    for (auto& d : preClusterDigits) {
+      float X = segment.padPositionX(d.getPadID());
+      float Y = segment.padPositionY(d.getPadID());
+      bool bend = !segment.isBendingPad(d.getPadID());
+      std::cout << fmt::format("  DE {:4d}  PAD {:5d}  ADC {:6d}  TIME ({} {} {:4d})",
+          d.getDetID(), d.getPadID(), d.getADC(), d.getTime().orbit, d.getTime().bunchCrossing, d.getTime().sampaTime);
+      std::cout << fmt::format("  CATHODE {}  PAD_XY {:+2.2f} , {:+2.2f}", (int)bend, X, Y);
+      std::cout << std::endl;
+    }
+  }
+}
+
+
+bool PhysicsTask::plotPrecluster(const o2::mch::PreCluster& preCluster, gsl::span<const o2::mch::Digit> digits)
 {
   // get the digits of this precluster
   auto preClusterDigits = digits.subspan(preCluster.firstDigit, preCluster.nDigits);
 
   bool cathode[2] = {false, false};
   float chargeSum[2] = {0, 0};
+  float chargeMax[2] = {0, 0};
 
   int detid = preClusterDigits[0].getDetID();
   const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(detid);
@@ -630,18 +699,22 @@ void PhysicsTask::plotPrecluster(const o2::mch::PreCluster& preCluster, gsl::spa
     int cid = segment.isBendingPad(padid) ? 0 : 1;
     cathode[cid] = true;
     chargeSum[cid] += digit.getADC();
+
+    if (digit.getADC() > chargeMax[cid]) {
+      chargeMax[cid] = digit.getADC();
+    }
   }
 
   // filter out single-pad clusters
   if (preCluster.nDigits < 2) {
-    return;
+    return true;
   }
 
 
   if (mPrintLevel >= 1) {
     std::cout<<"[pre-cluster] charge = "<<chargeSum[0]<<" "<<chargeSum[1]<<std::endl;
     for (auto& d : preClusterDigits) {
-      std::cout << fmt::format("  DE {:4d}  PAD {:5d}  ADC {:6d}  TIME {:4d}", d.getDetID(), d.getPadID(), d.getADC(), d.getTimeStamp());
+      std::cout << fmt::format("  DE {:4d}  PAD {:5d}  ADC {:6d}  TIME {:4d}", d.getDetID(), d.getPadID(), d.getADC(), d.getTime().sampaTime);
       std::cout << std::endl;
     }
   }
@@ -666,12 +739,18 @@ void PhysicsTask::plotPrecluster(const o2::mch::PreCluster& preCluster, gsl::spa
 
   // filter out clusters with small charge, which are likely to be noise
   if ((chargeSum[0]+chargeSum[1]) < 100) {
-    return;
+    return true;
   }
-
+  if ((chargeMax[0] < 100) && (chargeMax[1] < 100)) {
+    return true;
+  }
 
   double Xcog, Ycog;
   CoG(preClusterDigits, Xcog, Ycog);
+
+  if (Ycog < 0) {
+    return true;
+  }
 
   auto hXY0 = mHistogramPreclustersXY[0].find(detid);
   if ((hXY0 != mHistogramPreclustersXY[0].end()) && (hXY0->second != NULL)) {
@@ -697,6 +776,8 @@ void PhysicsTask::plotPrecluster(const o2::mch::PreCluster& preCluster, gsl::spa
       hXY1->second->Fill(Xcog, Ycog);
     }
   }
+
+  return (cathode[0] && cathode[1]);
 }
 
 
@@ -752,6 +833,7 @@ void PhysicsTask::endOfCycle()
       //mHistogramNhits[i]->Write();
       //mHistogramADCamplitude[i]->Write();
     }
+    mHistogramADCamplitudeVsSize->Write();
     //std::cout<<"mHistogramADCamplitudeDE.size() = "<<mHistogramADCamplitudeDE.size()<<"  DEs.size()="<<DEs.size()<<std::endl;
     int nbDEs = DEs.size();
     for (int elem = 0; elem < nbDEs; elem++) {

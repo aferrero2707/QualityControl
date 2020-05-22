@@ -1280,7 +1280,7 @@ void Decoder::processData(const char* buf, size_t size)
       if (!mMapFEC.getPadByLinkID(link_id, hit.ds_addr, hit.chan_addr, hit.pad))
         continue;
 
-      mDigits.emplace_back(o2::mch::Digit(0, hit.pad.fDE, hit.pad.fAddress, hit.csum));
+      mDigits.emplace_back(o2::mch::Digit(hit.pad.fDE, hit.pad.fAddress, hit.csum, o2::mch::Digit::Time{}));
 
     }
     if (gPrintLevel >= 1)

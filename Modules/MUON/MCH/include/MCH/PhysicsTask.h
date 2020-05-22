@@ -56,8 +56,9 @@ class PhysicsTask /*final*/ : public TaskInterface // todo add back the "final" 
   void storeDigits(void* bufferPtr);
 
   void plotDigit(const o2::mch::Digit& digit);
-  void plotPrecluster(const o2::mch::PreCluster& preCluster, gsl::span<const o2::mch::Digit> digits);
+  bool plotPrecluster(const o2::mch::PreCluster& preCluster, gsl::span<const o2::mch::Digit> digits);
   void checkPreclusters(gsl::span<const o2::mch::PreCluster> preClusters, gsl::span<const o2::mch::Digit> digits);
+  void printPreclusters(gsl::span<const o2::mch::PreCluster> preClusters, gsl::span<const o2::mch::Digit> digits);
 
  private:
   int count;
@@ -70,6 +71,7 @@ class PhysicsTask /*final*/ : public TaskInterface // todo add back the "final" 
 
   TH2F* mHistogramNhits[72];
   TH1F* mHistogramADCamplitude[72];
+  TH2F* mHistogramADCamplitudeVsSize;
   std::vector<int> DEs;
   std::map<int, TH1F*> mHistogramADCamplitudeDE;
   std::map<int, TH2F*> mHistogramNhitsDE;
