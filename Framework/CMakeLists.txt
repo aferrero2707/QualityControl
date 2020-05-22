@@ -49,7 +49,6 @@ add_library(QualityControl
             src/TaskRunnerFactory.cxx
             src/TaskInterface.cxx
             src/RepositoryBenchmark.cxx
-            src/HistoMerger.cxx
             src/InfrastructureGenerator.cxx
             src/Check.cxx
             src/ServiceDiscovery.cxx
@@ -63,7 +62,8 @@ add_library(QualityControl
             src/TrendingTaskConfig.cxx
             src/DummyDatabase.cxx
             src/DataProducer.cxx
-            src/DataProducerExample.cxx)
+            src/DataProducerExample.cxx
+            src/MonitorObjectCollection.cxx)
 
 if(ENABLE_MYSQL)
   target_sources(QualityControl PRIVATE src/MySqlDatabase.cxx)
@@ -93,6 +93,7 @@ target_link_libraries(QualityControl
                              O2::MCHBase
                              ms_gsl::ms_gsl
                              QualityControlTypes
+                             O2::Mergers
                       PRIVATE Boost::system
                               $<$<BOOL:${ENABLE_MYSQL}>:MySQL::MySQL>
                               $<$<BOOL:${ENABLE_MYSQL}>:ROOT::RMySQL> ROOT::Gui
@@ -111,12 +112,12 @@ add_root_dictionary(QualityControl
                             include/QualityControl/ServiceDiscovery.h
                             include/QualityControl/TaskRunner.h
                             include/QualityControl/TaskRunnerFactory.h
-                            include/QualityControl/HistoMerger.h
                             include/QualityControl/InfrastructureGenerator.h
                             include/QualityControl/InputUtils.h
                             include/QualityControl/PostProcessingInterface.h
                             include/QualityControl/TrendingTask.h
                             include/QualityControl/Reductor.h
+                            include/QualityControl/MonitorObjectCollection.h
                     LINKDEF include/QualityControl/LinkDef.h
                     BASENAME QualityControl)
 
@@ -130,7 +131,6 @@ set(EXE_SRCS
     src/runBasic.cxx
     src/runAdvanced.cxx
     src/runReadout.cxx
-    src/runMergerTest.cxx
     src/runReadoutForDataDump.cxx
     src/runRepositoryBenchmark.cxx
     src/runPostProcessing.cxx
@@ -144,7 +144,6 @@ set(EXE_NAMES
     o2-qc-run-basic
     o2-qc-run-advanced
     o2-qc-run-readout
-    o2-qc-run-merger-test
     o2-qc-run-readout-for-data-dump
     o2-qc-repository-benchmark
     o2-qc-run-postprocessing
@@ -160,7 +159,6 @@ set(EXE_OLD_NAMES
     qcRunBasic
     qcRunAdvanced
     qcRunReadout
-    runMergerTest
     qcRunReadoutForDataDump
     repositoryBenchmark
     qcRunPostProcessing
@@ -372,6 +370,7 @@ install(FILES example-default.json
               basic.json
               basic-no-sampling.json
               advanced.json
+              multiNode.json
               readout.json
               readout-no-sampling.json
               readoutForDataDump.json

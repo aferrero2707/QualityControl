@@ -66,10 +66,11 @@ void TaskRunner::init(InitContext& iCtx)
   iCtx.services().get<CallbackService>().set(CallbackService::Id::Reset, [this]() { reset(); });
 
   // setup monitoring
-  std::string monitoringUrl = mConfigFile->get<std::string>("qc.config.monitoring.url", "infologger:///debug?qc"); // "influxdb-udp://aido2mon-gpn.cern.ch:8087"
+  std::string monitoringUrl = mConfigFile->get<std::string>("qc.config.monitoring.url", "infologger:///debug?qc");
   mCollector = MonitoringFactory::Get(monitoringUrl);
   mCollector->enableProcessMonitoring();
   mCollector->addGlobalTag(tags::Key::Subsystem, tags::Value::QC);
+  mCollector->addGlobalTag("TaskName", mTaskConfig.taskName);
 
   // setup publisher
   mObjectsManager = std::make_shared<ObjectsManager>(mTaskConfig);
@@ -405,7 +406,7 @@ int TaskRunner::publish(DataAllocator& outputs)
   auto concreteOutput = framework::DataSpecUtils::asConcreteDataMatcher(mMonitorObjectsSpec);
   // getNonOwningArray creates a TObjArray containing the monitoring objects, but not
   // owning them. The array is created by new and must be cleaned up by the caller
-  std::unique_ptr<TObjArray> array(mObjectsManager->getNonOwningArray());
+  std::unique_ptr<MonitorObjectCollection> array(mObjectsManager->getNonOwningArray());
   int objectsPublished = array->GetEntries();
 
   outputs.snapshot(

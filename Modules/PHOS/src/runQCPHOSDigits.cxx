@@ -2,8 +2,8 @@
 #include <TH1.h>
 
 #include <Framework/DataSampling.h>
-#include <DataFormatsEMCAL/Digit.h>
-#include <EMCALWorkflow/PublisherSpec.h>
+#include <DataFormatsPHOS/Digit.h>
+#include <PHOSWorkflow/PublisherSpec.h>
 #include "QualityControl/InfrastructureGenerator.h"
 #include "QualityControl/CheckRunner.h"
 #include "QualityControl/CheckRunnerFactory.h"
@@ -42,40 +42,39 @@ std::string getConfigPath(const o2::framework::ConfigContext& config);
 o2::framework::WorkflowSpec defineDataProcessing(o2::framework::ConfigContext const& config)
 {
   o2::framework::WorkflowSpec specs;
-  using digitInputType = std::vector<o2::emcal::Digit>;
-  specs.push_back(o2::emcal::getPublisherSpec<digitInputType>(o2::emcal::PublisherConf{
-                                                                "emcal-digit-reader",
-                                                                "o2sim",
-                                                                { "digitbranch", "EMCALDigit", "Digit branch" },
-                                                                { "triggerrecordbranch", "EMCALDigitTRGR", "Trigger record branch" },
-                                                                { "mcbranch", "EMCALDigitMCTruth", "MC label branch" },
-                                                                o2::framework::OutputSpec{ "EMC", "DIGITS" },
-                                                                o2::framework::OutputSpec{ "EMC", "DIGITSTRGR" },
-                                                                o2::framework::OutputSpec{ "EMC", "DIGITSMCTR" } },
-                                                              false));
+
+  specs.push_back(o2::phos::getPublisherSpec(o2::phos::PublisherConf{
+                                               "phos-digit-reader",
+                                               "o2sim",
+                                               { "digitbranch", "PHOSDigit", "Digit branch" },
+                                               { "digittrigger", "PHOSDigitTrigRecords", "TrigRecords branch" },
+                                               { "mcbranch", "PHOSDigitMCTruth", "MC label branch" },
+                                               { "mcmapbranch", "", "Dummy branch" },
+                                               o2::framework::OutputSpec{ "PHS", "DIGITS" },
+                                               o2::framework::OutputSpec{ "PHS", "DIGITTRIGREC" },
+                                               o2::framework::OutputSpec{ "PHS", "DIGITSMCTR" },
+                                               o2::framework::OutputSpec{ "PHS", "" } }, // it empty, do not create
+                                             false, false));
 
   // Path to the config file
   std::string qcConfigurationSource = getConfigPath(config);
   LOG(INFO) << "Using config file '" << qcConfigurationSource << "'";
 
-  if (!config.options().get<bool>("local") && !config.options().get<bool>("remote")) {
-    ILOG(Info) << "Creating a standalone QC topology." << ENDM;
-    o2::quality_control::generateStandaloneInfrastructure(specs, qcConfigurationSource);
+  if (config.options().get<bool>("local") && config.options().get<bool>("remote")) {
+    ILOG(Info) << "To create both local and remote QC topologies, one does not have to add any of '--local' or '--remote' flags." << ENDM;
   }
 
-  if (config.options().get<bool>("local")) {
-    ILOG(Info) << "Creating a local QC topology." << ENDM;
+  if (config.options().get<bool>("local") || !config.options().get<bool>("remote")) {
 
     // Generation of Data Sampling infrastructure
     o2::framework::DataSampling::GenerateInfrastructure(specs, qcConfigurationSource);
 
-    // Generation of the local QC topology (local QC tasks and their output proxies)
+    // Generation of the local QC topology (local QC tasks)
     o2::quality_control::generateLocalInfrastructure(specs, qcConfigurationSource, config.options().get<std::string>("host"));
   }
-  if (config.options().get<bool>("remote")) {
-    ILOG(Info) << "Creating a remote QC topology." << ENDM;
+  if (config.options().get<bool>("remote") || !config.options().get<bool>("local")) {
 
-    // Generation of the remote QC topology (task for QC servers, input proxies, mergers and all check runners)
+    // Generation of the remote QC topology (task for QC servers, mergers and all checkers)
     o2::quality_control::generateRemoteInfrastructure(specs, qcConfigurationSource);
   }
 
@@ -85,7 +84,7 @@ o2::framework::WorkflowSpec defineDataProcessing(o2::framework::ConfigContext co
 std::string getConfigPath(const o2::framework::ConfigContext& config)
 {
   std::string userConfigPath = config.options().get<std::string>("config-path");
-  std::string defaultConfigPath = getenv("QUALITYCONTROL_ROOT") != nullptr ? std::string(getenv("QUALITYCONTROL_ROOT")) + "/Modules/EMCAL/etc/digits.json" : "$QUALITYCONTROL_ROOT undefined";
+  std::string defaultConfigPath = getenv("QUALITYCONTROL_ROOT") != nullptr ? std::string(getenv("QUALITYCONTROL_ROOT")) + "/Modules/PHOS/etc/digits.json" : "$QUALITYCONTROL_ROOT undefined";
   std::string path = userConfigPath == "" ? defaultConfigPath : userConfigPath;
   const std::string qcConfigurationSource = std::string("json:/") + path;
   return qcConfigurationSource;
