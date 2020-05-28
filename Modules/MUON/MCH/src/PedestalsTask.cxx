@@ -16,6 +16,11 @@
 #include "QualityControl/QcInfoLogger.h"
 #include "MCH/PedestalsTask.h"
 #include "MCHBase/Digit.h"
+#include "Headers/RAWDataHeader.h"
+#include "Headers/RDHAny.h"
+#include "MCHRawCommon/DataFormats.h"
+#include "MCHRawDecoder/PageDecoder.h"
+#include "MCHRawElecMap/Mapper.h"
 #include "MCHMappingInterface/Segmentation.h"
 #include "MCHMappingInterface/CathodeSegmentation.h"
 #include "MCHRawElecMap/Mapper.h"
@@ -28,6 +33,10 @@ using namespace std;
 using namespace o2::framework;
 
 static FILE* flog = NULL;
+
+#define QC_MCH_SAVE_TEMP_ROOTFILE 1
+
+#define MCH_FFEID_MAX (31*2 + 1)
 
 struct CRUheader {
   uint8_t header_version;
@@ -99,23 +108,19 @@ void PedestalsTask::initialize(o2::framework::InitContext& /*ctx*/)
 
     mDecoder.initialize();
 
+    mHistogramPedestals = new TH2F("QcMuonChambers_Pedestals", "QcMuonChambers - Pedestals",
+        (MCH_FFEID_MAX+1)*12*40, 0, (MCH_FFEID_MAX+1)*12*40, 64, 0, 64);
+    //getObjectsManager()->startPublishing(mHistogramPedestals);
+
+    mHistogramNoise = new TH2F("QcMuonChambers_Noise", "QcMuonChambers - Noise",
+        (MCH_FFEID_MAX+1)*12*40, 0, (MCH_FFEID_MAX+1)*12*40, 64, 0, 64);
+    //getObjectsManager()->startPublishing(mHistogramNoise);
+
     uint32_t dsid;
     std::vector<int> DEs;
     for (int cruid = 0; cruid < 31; cruid++) {
 
       for (int linkid = 0; linkid < 24; linkid++) {
-
-        int index = 24 * cruid + linkid;
-        mHistogramPedestals[index] = new TH2F(TString::Format("QcMuonChambers_Pedestals_CRU%01d_LINK%02d", cruid, linkid),
-            TString::Format("QcMuonChambers - Pedestals (CRU %01d, link %02d)", cruid, linkid), 40, 0, 40, 64, 0, 64);
-        //getObjectsManager()->startPublishing(mHistogramPedestals[index]);
-        //getObjectsManager()->addCheck(mHistogramPedestals[index], "checkFromMuonChambers",
-        //    "o2::quality_control_modules::muonchambers::MCHCheckPedestals", "QcMuonChambers");
-
-        mHistogramNoise[index] =
-            new TH2F(TString::Format("QcMuonChambers_Noise_CRU%01d_LINK%02d", cruid, linkid),
-                TString::Format("QcMuonChambers - Noise (CRU %01d link %02d)", cruid, linkid), 40, 0, 40, 64, 0, 64);
-        //getObjectsManager()->startPublishing(mHistogramNoise[index]);
 
         int32_t link_id = mDecoder.getMapCRU(cruid, linkid);
         if (link_id == -1)
@@ -272,11 +277,11 @@ void PedestalsTask::save_histograms()
 {
   TFile f("/tmp/qc.root", "RECREATE");
   fill_noise_distributions();
-  for (int i = 0; i < MCH_MAX_CRU_IN_FLP * 24; i++) {
-    mHistogramNoise[i]->Write();
-    mHistogramPedestals[i]->Write();
-  }
-  for (int i = 0; i < 2; i++) {
+
+  mHistogramNoise->Write();
+  mHistogramPedestals->Write();
+
+    for (int i = 0; i < 2; i++) {
     auto ih = mHistogramPedestalsXY[i].begin();
     while (ih != mHistogramPedestalsXY[i].end()) {
       ih->second->Write();
@@ -328,15 +333,7 @@ void PedestalsTask::save_histograms()
 void PedestalsTask::monitorDataReadout(o2::framework::ProcessingContext& ctx)
 {
   //QcInfoLogger::GetInstance() << "monitorDataReadout" << AliceO2::InfoLogger::InfoLogger::endm;
-  fprintf(flog, "\n================\nmonitorDataReadout\n================\n");
-
-#ifdef QC_MCH_SAVE_TEMP_ROOTFILE
-  if (count > 0 && (count % 10) == 0 /*&& count <= 5000*/) {
-    save_histograms();
-  }
-  printf("count: %d\n", count);
-  count += 1;
-#endif
+  //fprintf(flog, "\n================\nmonitorDataReadout\n================\n");
 
   // Reset the hits container
   mDecoder.reset();
@@ -410,14 +407,11 @@ void PedestalsTask::monitorDataReadout(o2::framework::ProcessingContext& ctx)
           (int)nhits[hit.cru_id][hit.link_id][hit.ds_addr][hit.chan_addr],
           pedestal[hit.cru_id][hit.link_id][hit.ds_addr][hit.chan_addr], rms);*/
 
-    mHistogramPedestals[hit.cru_id * 24 + hit.link_id]->SetBinContent(hit.ds_addr + 1, hit.chan_addr + 1,
-        pedestal[hit.cru_id][hit.link_id][hit.ds_addr][hit.chan_addr]);
-    mHistogramNoise[hit.cru_id * 24 + hit.link_id]->SetBinContent(hit.ds_addr + 1, hit.chan_addr + 1, rms);
+      int xbin = hit.fee_id * 12 * 40 + (hit.link_id % 12) * 40 + hit.ds_addr + 1;
+      int ybin = hit.chan_addr + 1;
 
-    if (hit.pad.fDE < 0)
-      continue;
-    if ((hit.pad.fCathode < 0) || (hit.pad.fCathode > 1))
-      continue;
+      mHistogramPedestals->SetBinContent(xbin, ybin, pedestal[hit.cru_id][hit.link_id][hit.ds_addr][hit.chan_addr]);
+      mHistogramNoise->SetBinContent(xbin, ybin, rms);
 
     // Fill the histograms for each detection element
     int de = hit.pad.fDE;
@@ -474,14 +468,6 @@ void PedestalsTask::monitorDataReadout(o2::framework::ProcessingContext& ctx)
 void PedestalsTask::monitorDataDigits(const o2::framework::DataRef& input)
 {
   //QcInfoLogger::GetInstance() << "monitorDataDigits" << AliceO2::InfoLogger::InfoLogger::endm;
-
-#ifdef QC_MCH_SAVE_TEMP_ROOTFILE
-  if ((count % 10) == 0 /*&& count <= 5000*/) {
-    save_histograms();
-    printf("count: %d\n", count);
-  }
-  count += 1;
-#endif
 
   if (input.spec->binding != "digits")
     return;
@@ -583,7 +569,7 @@ void PedestalsTask::monitorData(o2::framework::ProcessingContext& ctx)
 {
   monitorDataReadout(ctx);
   for (auto&& input : ctx.inputs()) {
-    QcInfoLogger::GetInstance() << "run PedestalsTask: input " << input.spec->binding << AliceO2::InfoLogger::InfoLogger::endm;
+    //QcInfoLogger::GetInstance() << "run PedestalsTask: input " << input.spec->binding << AliceO2::InfoLogger::InfoLogger::endm;
     if (input.spec->binding == "digits")
       monitorDataDigits(input);
   }
@@ -592,6 +578,9 @@ void PedestalsTask::monitorData(o2::framework::ProcessingContext& ctx)
 void PedestalsTask::endOfCycle()
 {
   QcInfoLogger::GetInstance() << "endOfCycle" << AliceO2::InfoLogger::InfoLogger::endm;
+#ifdef QC_MCH_SAVE_TEMP_ROOTFILE
+  save_histograms();
+#endif
 }
 
 void PedestalsTask::endOfActivity(Activity& /*activity*/)

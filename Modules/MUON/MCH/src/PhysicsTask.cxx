@@ -291,12 +291,9 @@ void PhysicsTask::monitorDataDigits(const o2::framework::DataRef& input)
     ptr += 1;
   }
 
-  for (auto& d : digits) {
-    if (mPrintLevel >= 1) {
-      std::cout << fmt::format("  DE {:4d}  PAD {:5d}  ADC {:6d}  TIME {:4d}", d.getDetID(), d.getPadID(), d.getADC(), d.getTime().sampaTime);
-      std::cout << std::endl;
-    }
-    plotDigit(d);
+  for (uint32_t i = 0; i < digits.size(); i++) {
+    o2::mch::Digit& digit = digits[i];
+    plotDigit(digit);
   }
 }
 

@@ -64,6 +64,7 @@ namespace muonchambers
 
 bool BXCNT_compare(long int c1, long int c2)
 {
+  return true;
   const int64_t MAX = 0xFFFFF;
   //int64_t diff = c1 - c2;
   //if(diff >= MAX) diff -= MAX;
@@ -965,6 +966,8 @@ void Decoder::decodeRaw(uint32_t* payload_buf, size_t nGBTwords, int cru_id, int
             Sampa::SampaHeaderStruct& header = ds[cru_id][link_id][i].header;
             SampaHit& hit = ds[cru_id][link_id][i].hit;
             hit.cru_id = cru_id;
+            hit.data_path = link_id / 12;
+            hit.fee_id = cru_id * 2 + hit.data_path;
             hit.link_id = link_id;
             hit.ds_addr = ds[cru_id][link_id][i].id;
             int chip_id = ds[cru_id][link_id][i].header.fChipAddress % 2;
