@@ -111,10 +111,14 @@ void PedestalsTask::initialize(o2::framework::InitContext& /*ctx*/)
     mHistogramPedestals = new TH2F("QcMuonChambers_Pedestals", "QcMuonChambers - Pedestals",
         (MCH_FFEID_MAX+1)*12*40, 0, (MCH_FFEID_MAX+1)*12*40, 64, 0, 64);
     //getObjectsManager()->startPublishing(mHistogramPedestals);
+    mHistogramPedestalsMCH = new GlobalHistogram("QcMuonChambers_Pedestals_AllDE", "Pedestals");
+    mHistogramPedestalsMCH->init();
 
     mHistogramNoise = new TH2F("QcMuonChambers_Noise", "QcMuonChambers - Noise",
         (MCH_FFEID_MAX+1)*12*40, 0, (MCH_FFEID_MAX+1)*12*40, 64, 0, 64);
     //getObjectsManager()->startPublishing(mHistogramNoise);
+    mHistogramNoiseMCH = new GlobalHistogram("QcMuonChambers_Noise_AllDE", "Noise");
+    mHistogramNoiseMCH->init();
 
     uint32_t dsid;
     std::vector<int> DEs;
@@ -277,6 +281,9 @@ void PedestalsTask::save_histograms()
 {
   TFile f("/tmp/qc.root", "RECREATE");
   fill_noise_distributions();
+
+  mHistogramPedestalsMCH->Write();
+  mHistogramNoiseMCH->Write();
 
   mHistogramNoise->Write();
   mHistogramPedestals->Write();
@@ -578,6 +585,10 @@ void PedestalsTask::monitorData(o2::framework::ProcessingContext& ctx)
 void PedestalsTask::endOfCycle()
 {
   QcInfoLogger::GetInstance() << "endOfCycle" << AliceO2::InfoLogger::InfoLogger::endm;
+
+  mHistogramPedestalsMCH->set(mHistogramPedestalsXY[0], mHistogramPedestalsXY[1], true);
+  mHistogramNoiseMCH->set(mHistogramNoiseXY[0], mHistogramNoiseXY[1], true);
+
 #ifdef QC_MCH_SAVE_TEMP_ROOTFILE
   save_histograms();
 #endif
