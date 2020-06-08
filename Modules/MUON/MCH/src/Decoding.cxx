@@ -8,6 +8,7 @@
 #include <TH2.h>
 
 #include "Headers/RAWDataHeader.h"
+#include "DetectorsRaw/RDHUtils.h"
 #include "QualityControl/QcInfoLogger.h"
 #include "MCH/Decoding.h"
 #include "MCHBase/Digit.h"
@@ -59,6 +60,8 @@ namespace quality_control_modules
 {
 namespace muonchambers
 {
+
+using RDH = o2::header::RDHAny;
 
 
 
@@ -468,7 +471,7 @@ decode_state_t Add1BitOfData(uint32_t gbtdata, DualSampa& dsr, DualSampaGroup* d
                   (unsigned long)ds->header.fBunchCrossingCounter, (int)ds->header.fPayloadParity);
         int parity = CheckDataParity(ds->data);
         if (parity)
-          fprintf(flog, "===> SAMPA [%2d]: WARNING Parity %d\n", ds->id, parity);
+          fprintf(flog, "===> SAMPA [%d %d %2d]: WARNING Parity %d\n", ds->hit.cru_id, ds->hit.link_id, ds->id, parity);
 
         //fprintf(flog,"SAMPA [%2d]: ChipAdd %d ChAdd %2d BX %d, expected %d\n",
         //              ds->id, ds->header.fChipAddress,ds->header.fChannelAddress,
@@ -504,7 +507,9 @@ decode_state_t Add1BitOfData(uint32_t gbtdata, DualSampa& dsr, DualSampaGroup* d
         HammingDecode(buf, hamming_error, hamming_uncorr, hamming_enable);
         if (hamming_error) {
           gNbErrors++;
-          fprintf(flog, "SAMPA [%2d]: Hamming ERROR -> Correctable: %s\n", ds->id, hamming_uncorr ? "NO" : "YES");
+          fprintf(flog, "SAMPA [%d %d %2d (J%d DS%d)]: Hamming ERROR -> Correctable: %s\n",
+              ds->hit.cru_id, ds->hit.link_id, ds->id, (int)(ds->id/5 + 1), (int)(ds->id%5),
+              hamming_uncorr ? "NO" : "YES");
           ds->status = notSynchronized;
           result = DECODE_STATE_UNKNOWN;
         } else {                          // No Hamming error
@@ -628,8 +633,8 @@ decode_state_t Add1BitOfData(uint32_t gbtdata, DualSampa& dsr, DualSampaGroup* d
     case dataToRead: { // Read ADC data words (10 bits)
       if (ds->bit < 10)
         break;
-      if (gPrintLevel >= 2)
-        fprintf(flog, "SAMPA #%d Data word: 0x%" PRIu64 " (%" PRIu64 ")\n", ds->id, ds->data, ds->data);
+      if (gPrintLevel >= 1)
+        fprintf(flog, "SAMPA [%2d]: Data word 0x%" PRIu64 " (%" PRIu64 ")\n", ds->id, ds->data, ds->data);
 
       if (1 /*ds->header.fPkgType == 4*/) {
         if (ds->header.fPkgType == 4) { // Good data
@@ -862,6 +867,39 @@ Decoder::Decoder() {}
 
 Decoder::~Decoder() { fclose(flog); }
 
+std::string Decoder::readFileContent(const std::string& filename)
+{
+  std::string content;
+  std::string s;
+  std::ifstream in(filename);
+  while (std::getline(in, s)) {
+    content += s;
+    content += " ";
+  }
+  return content;
+}
+
+void Decoder::initElec2DetMapper(const std::string& filename)
+{
+  if (filename.empty()) {
+    mElec2Det = o2::mch::raw::createElec2DetMapper<o2::mch::raw::ElectronicMapperGenerated>();
+  } else {
+    o2::mch::raw::ElectronicMapperString::sFecMap = readFileContent(filename);
+    mElec2Det = o2::mch::raw::createElec2DetMapper<o2::mch::raw::ElectronicMapperString>();
+  }
+}
+
+void Decoder::initFee2SolarMapper(const std::string& filename)
+{
+  if (filename.empty()) {
+    mFee2Solar = o2::mch::raw::createFeeLink2SolarMapper<o2::mch::raw::ElectronicMapperGenerated>();
+    mSolar2Fee = o2::mch::raw::createSolar2FeeLinkMapper<o2::mch::raw::ElectronicMapperGenerated>();
+  } else {
+    o2::mch::raw::ElectronicMapperString::sCruMap = readFileContent(filename);
+    mFee2Solar = o2::mch::raw::createFeeLink2SolarMapper<o2::mch::raw::ElectronicMapperString>();
+  }
+}
+
 void Decoder::initialize()
 {
   QcInfoLogger::GetInstance() << "initialize Decoder" << AliceO2::InfoLogger::InfoLogger::endm;
@@ -889,6 +927,12 @@ void Decoder::initialize()
 
   mMapCRU.readMapping("cru.map");
   mMapFEC.readDSMapping("fec.map");
+
+  std::string mapCRUfile;
+  std::string mapFECfile;
+
+  initFee2SolarMapper(mapCRUfile);
+  initElec2DetMapper(mapFECfile);
 
   fprintf(stdout, "initialize ds_enable\n");
   for (int c = 0; c < MCH_MAX_CRU_IN_FLP; c++) {
@@ -923,7 +967,7 @@ void Decoder::initialize()
   }
   */
 
-  gPrintLevel = 0;
+  gPrintLevel = 1;
 
   //if( gPrintLevel > 0 ) flog = fopen("/home/flp/qc.log", "w");
   //else
@@ -933,6 +977,7 @@ void Decoder::initialize()
 
 void Decoder::decodeRaw(uint32_t* payload_buf, size_t nGBTwords, int cru_id, int link_id)
 {
+  //fprintf(stdout,"[decodeRaw] payload_buf=%p\n", (void*)payload_buf);
   uint32_t hhvalue, hlvalue, lhvalue, llvalue;
   for (size_t wi = 0; wi < nGBTwords; wi++) {
     uint32_t* ptr = payload_buf + wi * 4;
@@ -954,6 +999,13 @@ void Decoder::decodeRaw(uint32_t* payload_buf, size_t nGBTwords, int cru_id, int
 
       uint32_t group = ds[cru_id][link_id][i].id / 5;
       uint32_t bits[2] = { data2bits[i] & 0x1, (data2bits[i] >> 1) & 0x1 };
+
+      SampaHit& hit = ds[cru_id][link_id][i].hit;
+      hit.cru_id = cru_id;
+      hit.data_path = link_id / 12;
+      hit.fee_id = cru_id * 2 + hit.data_path;
+      hit.link_id = link_id;
+      hit.ds_addr = ds[cru_id][link_id][i].id;
       for (int k = 0; k < 2; k++) {
         decode_state_t state = Add1BitOfData(bits[k], (ds[cru_id][link_id][i]), &(dsg[cru_id][link_id][group]));
         switch (state) {
@@ -964,7 +1016,7 @@ void Decoder::decodeRaw(uint32_t* payload_buf, size_t nGBTwords, int cru_id, int
           case DECODE_STATE_HEADER_FOUND:
             uint64_t _h;
             memcpy(&_h, &(ds[cru_id][link_id][i].header), sizeof(ds[cru_id][link_id][i].header));
-            if (gPrintLevel >= 1)
+            if (gPrintLevel >= 1  )
               fprintf(flog, "board %d %d %d -> HEADER: %05" PRIu64 ", %lu, %lu\n",
                       cru_id, link_id, i, _h,
                       (unsigned long)ds[cru_id][link_id][i].header.fChipAddress,
@@ -1152,7 +1204,246 @@ void Decoder::decodeUL(uint32_t* payload_buf_32, size_t nWords, int cru_id, int 
   }
 }
 
+void Decoder::decodeBuffer(gsl::span<const std::byte> page)
+{
+  size_t ndigits{0};
+
+  uint32_t orbit;
+
+  bool mPrint = gPrintLevel > 0;
+
+  auto channelHandler = [&](o2::mch::raw::DsElecId dsElecId, uint8_t channel, o2::mch::raw::SampaCluster sc) {
+    if (mPrint) {
+      auto s = asString(dsElecId);
+      auto ch = fmt::format("{}-CH{}", s, channel);
+      std::cout << ch << std::endl;
+    }
+    uint32_t digitadc(0);
+    if (sc.isClusterSum()) {
+      digitadc = sc.chargeSum;
+    } else {
+      for (auto d = 0; d < sc.samples.size(); d++) {
+        digitadc += sc.samples[d];
+      }
+    }
+
+    int deId{-1};
+    int dsIddet{-1};
+    if (auto opt = mElec2Det(dsElecId); opt.has_value()) {
+      o2::mch::raw::DsDetId dsDetId = opt.value();
+      dsIddet = dsDetId.dsId();
+      deId = dsDetId.deId();
+    }
+
+    int padId = -1;
+    try {
+      const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(deId);
+      padId = segment.findPadByFEE(dsIddet, int(channel));
+      if (mPrint) {
+        std::cout << "DS " << (int)dsElecId.elinkId() << "  CHIP " << ((int)channel) / 32 << "  CH " << ((int)channel) % 32 << "  ADC " << digitadc << "  DE# " << deId << "  DSid " << dsIddet << "  PadId " << padId << std::endl;
+      }
+    } catch (const std::exception& e) {
+      std::cout << "Failed to get padId: " << e.what() << std::endl;
+      return;
+    }
+
+    o2::mch::Digit::Time time;
+    time.sampaTime = sc.sampaTime;
+    time.bunchCrossing = sc.bunchCrossing;
+    time.orbit = orbit;
+
+    int feeId{-1};
+    int linkId{-1};
+    //if (auto opt = mSolar2Fee(dsElecId.solarId()); opt.has_value()) {
+    //  o2::mch::raw::FeeLinkId feeLinkId = opt.value();
+    //  feeId = feeLinkId.feeId();
+    //  linkId = feeLinkId.linkId();
+    //}
+
+    SampaHit hit;
+    hit.fee_id = feeId;
+    hit.cru_id = hit.fee_id / 2;
+    hit.data_path = hit.fee_id % 2;
+    hit.link_id = linkId;
+    hit.ds_addr = dsElecId.elinkId();
+    hit.samples = sc.samples;
+    hit.bxc = sc.bunchCrossing;
+    hit.time = sc.sampaTime;
+    hit.csum = digitadc;
+    hit.size = sc.nofSamples();
+
+    mHits.push_back(hit);
+
+    //digits.emplace_back(o2::mch::Digit(deId, padId, digitadc, time));
+
+    //if (mPrint)
+    //  std::cout << "DIGIT STORED:\nADC " << digits.back().getADC() << " DE# " << digits.back().getDetID() << " PadId " << digits.back().getPadID() << " time " << digits.back().getTime().sampaTime << std::endl;
+    ++ndigits;
+  };
+
+  const auto patchPage = [&](gsl::span<const std::byte> rdhBuffer) {
+    auto rdhPtr = const_cast<void*>(reinterpret_cast<const void*>(rdhBuffer.data()));
+    auto cruId = o2::raw::RDHUtils::getCRUID(rdhPtr) & 0xFF;
+    auto flags = o2::raw::RDHUtils::getCRUID(rdhPtr) & 0xFF00;
+    auto endpoint = o2::raw::RDHUtils::getEndPointID(rdhPtr);
+    auto feeId = cruId * 2 + endpoint + flags;
+    o2::raw::RDHUtils::setFEEID(rdhPtr, feeId);
+    orbit = o2::raw::RDHUtils::getHeartBeatOrbit(rdhPtr);
+    if (mPrint) {
+      o2::raw::RDHUtils::printRDH(rdhPtr);
+    }
+  };
+
+  patchPage(page);
+
+  if (!mDecoder) {
+    mDecoder = mFee2Solar ? o2::mch::raw::createPageDecoder(page, channelHandler, mFee2Solar)
+                          : o2::mch::raw::createPageDecoder(page, channelHandler);
+  }
+  mDecoder(page);
+}
+
 void Decoder::processData(const char* buf, size_t size)
+{
+  int manu2ds[64] = {
+      63, 62, 61, 60, 59, 57, 56, 53, 51, 50, 47, 45, 44, 41, 38, 35,
+      36, 33, 34, 37, 32, 39, 40, 42, 43, 46, 48, 49, 52, 54, 55, 58,
+      7, 8, 5, 2, 6, 1, 3, 0, 4, 9, 10, 15, 17, 18, 22, 25,
+      31, 30, 29, 28, 27, 26, 24, 23, 20, 21, 16, 19, 12, 14, 11, 13};
+
+  int ds2manu[64];
+  for (int i = 0; i < 64; i++) {
+    for (int j = 0; j < 64; j++) {
+      if (manu2ds[j] != i)
+        continue;
+      ds2manu[i] = j;
+      break;
+    }
+  }
+
+  const RDH* rdh = (const RDH*)buf;
+  uint32_t payload_offset = 0;
+  if (size < sizeof(RDH))
+    return;
+
+  while (payload_offset < size) {
+
+    if (gPrintLevel >= 1)
+      fprintf(flog, "CRU payload_offset: %d, size: %d\n", (int)payload_offset, (int)size);
+
+    uint32_t* payload_buf = (uint32_t*)(buf);
+    //fprintf(stdout,"[processData] payload_buf=%p\n", (void*)payload_buf);
+
+    auto rdhVersion = o2::raw::RDHUtils::getVersion(rdh);
+    auto rdhHeaderSize = o2::raw::RDHUtils::getHeaderSize(rdh);
+    auto frameSize = o2::raw::RDHUtils::getOffsetToNext(rdh);
+    auto memorySize = o2::raw::RDHUtils::getMemorySize(rdh);
+    auto payloadSize = memorySize - rdhHeaderSize;
+    int cruId = o2::raw::RDHUtils::getCRUID(rdh);
+    auto rdhLinkId = o2::raw::RDHUtils::getLinkID(rdh);
+    int dpwId = o2::raw::RDHUtils::getEndPointID(rdh);
+    auto rdhOrbit = o2::raw::RDHUtils::getHeartBeatOrbit(rdh);
+    auto packetCounter = o2::raw::RDHUtils::getPacketCounter(rdh);
+    if (gPrintLevel >= 1)
+      fprintf(flog, "%d:  header_version: %X, header_size: %d, memory_size: %d, next_packet_offset: %d, block_length: %d, packet: %d, cru_id: %d, link_id: %d, orbit: %d\n",
+              nFrames, (int)rdhVersion, (int)rdhHeaderSize, (int)memorySize,
+              (int)frameSize, (int)payloadSize, (int)packetCounter, (int)cruId, (int)rdhLinkId, (int)rdhOrbit);
+
+    // Check RDH version and size
+    if (rdhVersion < 4 || rdhVersion > 6) {
+      QcInfoLogger::GetInstance() << "[Decoder::processData] Wrong CRU header version: " << (int)rdhVersion << AliceO2::InfoLogger::InfoLogger::endm;
+      return;
+    }
+    if (rdhHeaderSize != 64) {
+      QcInfoLogger::GetInstance() << "[Decoder::processData] Wrong CRU header size: " << (int)rdhHeaderSize << AliceO2::InfoLogger::InfoLogger::endm;
+      return;
+    }
+
+    // Compute size of payload inside 8kB block
+    rdh += frameSize;
+    payload_offset += frameSize;
+
+    //fprintf(flog, "CRU header: %08X %08X %08X %08X \n", CRUbuf[0], CRUbuf[1], CRUbuf[2], CRUbuf[3]);
+    //fprintf(flog, "CRU header: %08X %08X %08X %08X \n", CRUbuf[4], CRUbuf[5], CRUbuf[6], CRUbuf[7]);
+    //fprintf(flog, "CRU header: %08X %08X %08X %08X \n", CRUbuf[8], CRUbuf[9], CRUbuf[10], CRUbuf[11]);
+    //fprintf(flog, "CRU header: %08X %08X %08X %08X \n", CRUbuf[12], CRUbuf[13], CRUbuf[14], CRUbuf[15]);
+    //fprintf(flog, "CRU header version: %d\n", (int)CRUh.header_version);
+    //fprintf(flog, "CRU header size: %d\n", (int)CRUh.header_size);
+    //fprintf(flog, "CRU header block length: %d\n", (int)CRUh.block_length);
+    if (gPrintLevel >= 3)
+      fprintf(flog, "CRU packet counter: %d\n", (int)packetCounter);
+    if (gPrintLevel >= 3)
+      fprintf(flog, "CRU orbit id: %d\n", (int)rdhOrbit);
+    if (gPrintLevel >= 1)
+      fprintf(flog, "CRU link ID: %d\n", (int)rdhLinkId);
+    if (gPrintLevel >= 1)
+      fprintf(flog, "CRU ID: %d\n", (int)cruId);
+    if (gPrintLevel >= 1)
+      fprintf(flog, "DPW ID: %d\n", (int)dpwId);
+
+    nFrames += 1;
+
+    int cru_lid = (rdhLinkId == 15) ? rdhLinkId : rdhLinkId + 12 * dpwId;
+    bool is_raw = (rdhLinkId != 15);
+
+    bool orbit_jump = true;
+    int Dorbit1 = rdhOrbit - hb_orbit;
+    int Dorbit2 = (uint32_t)(((uint64_t)rdhOrbit) + 0x100000000 - hb_orbit);
+    if (Dorbit1 >= 0 && Dorbit1 <= 1)
+      orbit_jump = false;
+    if (Dorbit2 >= 0 && Dorbit2 <= 1)
+      orbit_jump = false;
+    if (true && orbit_jump) {
+      int lid_min = (rdhLinkId == 15) ? dpwId * 12 : 0;
+      int lid_max = (rdhLinkId == 15) ? 11 + dpwId * 12 : 23;
+      if (gPrintLevel >= 1)
+        fprintf(flog, "Resetting decoding FSM: orbit=%d, previous=%d, links=%d-%d\n",
+            rdhOrbit, hb_orbit, lid_min, lid_max);
+      for (int l = lid_min; l <= lid_max; l++) {
+        for (int i = 0; i < 40; i++) {
+          DualSampaReset(&(ds[cruId][l][i]));
+          ds[cruId][l][i].id = i;
+          ds[cruId][l][i].nbHit = -1;
+          for (int j = 0; j < 64; j++) {
+            ds[cruId][l][i].nbHitChan[j] = 0;
+          }
+        }
+        for (int i = 0; i < 8; i++) {
+          DualSampaGroupReset(&(dsg[cruId][l][i]));
+        }
+      }
+    }
+    hb_orbit = rdhOrbit;
+
+    gsl::span<const std::byte> sbuf((std::byte*)buf, payloadSize + rdhHeaderSize);
+    decodeBuffer(sbuf);
+
+    if (gPrintLevel >= 1)
+      fprintf(flog, "mHits.size(): %d\n", (int)mHits.size());
+    for (size_t ih = 0; ih < mHits.size(); ih++) {
+      SampaHit& hit = mHits[ih];
+      hit.pad.fDE = -1;
+      hit.pad.fCathode = 0;
+      int manuch = ds2manu[hit.chan_addr];
+      hit.chan_addr = manuch;
+
+      int32_t link_id = mMapCRU.getLink(hit.cru_id, hit.link_id);
+      if (link_id < 0)
+        continue;
+      //printf("cru_id=%d link_id=%d  LID=%d\n", (int)hit.cru_id, (int)hit.link_id, (int)link_id);
+
+      if (!mMapFEC.getPadByLinkID(link_id, hit.ds_addr, hit.chan_addr, hit.pad))
+        continue;
+
+      mDigits.emplace_back(o2::mch::Digit(hit.pad.fDE, hit.pad.fAddress, hit.csum, o2::mch::Digit::Time{}));
+
+    }
+    if (gPrintLevel >= 1)
+      fprintf(flog, "Finished processing hits\n");
+  }
+}
+
+void Decoder::processDataAlt(const char* buf, size_t size)
 {
   int RDH_BLOCK_SIZE = 8192;
 
@@ -1172,11 +1463,9 @@ void Decoder::processData(const char* buf, size_t size)
     }
   }
 
-  const char* rdh = buf;
+  const RDH* rdh = (const RDH*)buf;
   uint32_t payload_offset = 0;
-  uint32_t CRUbuf[4 * 4];
-  CRUheader CRUh;
-  if (size < sizeof(CRUbuf))
+  if (size < sizeof(RDH))
     return;
 
   while (payload_offset < size) {
@@ -1184,34 +1473,39 @@ void Decoder::processData(const char* buf, size_t size)
     if (gPrintLevel >= 1)
       fprintf(flog, "CRU payload_offset: %d, size: %d\n", (int)payload_offset, (int)size);
 
-    memcpy(CRUbuf, rdh, sizeof(CRUbuf));
-    memcpy(&CRUh, CRUbuf, sizeof(CRUheader));
+    uint32_t* payload_buf = (uint32_t*)(buf + 16 * 4);
+    //fprintf(stdout,"[processData] payload_buf=%p\n", (void*)payload_buf);
 
-    uint32_t* payload_buf = (uint32_t*)(rdh + 16 * 4);
-
+    auto rdhVersion = o2::raw::RDHUtils::getVersion(rdh);
+    auto rdhHeaderSize = o2::raw::RDHUtils::getHeaderSize(rdh);
+    auto frameSize = o2::raw::RDHUtils::getOffsetToNext(rdh);
+    auto memorySize = o2::raw::RDHUtils::getMemorySize(rdh);
+    auto payloadSize = memorySize - rdhHeaderSize;
+    int cruId = o2::raw::RDHUtils::getCRUID(rdh);
+    auto rdhLinkId = o2::raw::RDHUtils::getLinkID(rdh);
+    int dpwId = o2::raw::RDHUtils::getEndPointID(rdh);
+    auto rdhOrbit = o2::raw::RDHUtils::getHeartBeatOrbit(rdh);
+    auto packetCounter = o2::raw::RDHUtils::getPacketCounter(rdh);
     if (gPrintLevel >= 1)
       fprintf(flog, "%d:  header_version: %X, header_size: %d, memory_size: %d, next_packet_offset: %d, block_length: %d, packet: %d, cru_id: %d, link_id: %d, orbit: %d\n",
-              nFrames, (int)CRUh.header_version, (int)CRUh.header_size, (int)CRUh.memory_size, (int)CRUh.next_packet_offset, (int)CRUh.block_length,
-              (int)CRUh.packet_counter, (int)CRUh.cru_id, (int)CRUh.link_id, (int)CRUh.hb_orbit);
+              nFrames, (int)rdhVersion, (int)rdhHeaderSize, (int)memorySize,
+              (int)frameSize, (int)payloadSize, (int)packetCounter, (int)cruId, (int)rdhLinkId, (int)rdhOrbit);
 
     // Check RDH version and size
-    if (((int)CRUh.header_version) != 4) {
-      QcInfoLogger::GetInstance() << "[Decoder::processData] Wrong CRU header version: " << (int)CRUh.header_version << AliceO2::InfoLogger::InfoLogger::endm;
+    if (rdhVersion < 4 || rdhVersion > 6) {
+      QcInfoLogger::GetInstance() << "[Decoder::processData] Wrong CRU header version: " << (int)rdhVersion << AliceO2::InfoLogger::InfoLogger::endm;
       return;
     }
-    if (((int)CRUh.header_size) != 64) {
-      QcInfoLogger::GetInstance() << "[Decoder::processData] Wrong CRU header size: " << (int)CRUh.header_size << AliceO2::InfoLogger::InfoLogger::endm;
+    if (rdhHeaderSize != 64) {
+      QcInfoLogger::GetInstance() << "[Decoder::processData] Wrong CRU header size: " << (int)rdhHeaderSize << AliceO2::InfoLogger::InfoLogger::endm;
       return;
     }
+
     // Compute size of payload inside 8kB block
-    CRUh.block_length = CRUh.memory_size - CRUh.header_size;
-    RDH_BLOCK_SIZE = CRUh.next_packet_offset; // - CRUh.header_size;
+    RDH_BLOCK_SIZE = frameSize;
 
     rdh += RDH_BLOCK_SIZE;
     payload_offset += RDH_BLOCK_SIZE;
-
-    int cruId = CRUh.cru_id;
-    int dpwId = CRUh.dpw_id;
 
     //fprintf(flog, "CRU header: %08X %08X %08X %08X \n", CRUbuf[0], CRUbuf[1], CRUbuf[2], CRUbuf[3]);
     //fprintf(flog, "CRU header: %08X %08X %08X %08X \n", CRUbuf[4], CRUbuf[5], CRUbuf[6], CRUbuf[7]);
@@ -1221,11 +1515,11 @@ void Decoder::processData(const char* buf, size_t size)
     //fprintf(flog, "CRU header size: %d\n", (int)CRUh.header_size);
     //fprintf(flog, "CRU header block length: %d\n", (int)CRUh.block_length);
     if (gPrintLevel >= 3)
-      fprintf(flog, "CRU packet counter: %d\n", (int)CRUh.packet_counter);
+      fprintf(flog, "CRU packet counter: %d\n", (int)packetCounter);
     if (gPrintLevel >= 3)
-      fprintf(flog, "CRU orbit id: %d\n", (int)CRUh.hb_orbit);
+      fprintf(flog, "CRU orbit id: %d\n", (int)rdhOrbit);
     if (gPrintLevel >= 1)
-      fprintf(flog, "CRU link ID: %d\n", (int)CRUh.link_id);
+      fprintf(flog, "CRU link ID: %d\n", (int)rdhLinkId);
     if (gPrintLevel >= 1)
       fprintf(flog, "CRU ID: %d\n", (int)cruId);
     if (gPrintLevel >= 1)
@@ -1233,23 +1527,22 @@ void Decoder::processData(const char* buf, size_t size)
 
     nFrames += 1;
 
-    int rdh_lid = CRUh.link_id;
-    int cru_lid = (rdh_lid == 15) ? rdh_lid : rdh_lid + 12 * dpwId;
-    bool is_raw = (rdh_lid != 15);
+    int cru_lid = (rdhLinkId == 15) ? rdhLinkId : rdhLinkId + 12 * dpwId;
+    bool is_raw = (rdhLinkId != 15);
 
     bool orbit_jump = true;
-    int Dorbit1 = CRUh.hb_orbit - hb_orbit;
-    int Dorbit2 = (uint32_t)(((uint64_t)CRUh.hb_orbit) + 0x100000000 - hb_orbit);
+    int Dorbit1 = rdhOrbit - hb_orbit;
+    int Dorbit2 = (uint32_t)(((uint64_t)rdhOrbit) + 0x100000000 - hb_orbit);
     if (Dorbit1 >= 0 && Dorbit1 <= 1)
       orbit_jump = false;
     if (Dorbit2 >= 0 && Dorbit2 <= 1)
       orbit_jump = false;
     if (true && orbit_jump) {
-      int lid_min = (rdh_lid == 15) ? dpwId * 12 : 0;
-      int lid_max = (rdh_lid == 15) ? 11 + dpwId * 12 : 23;
+      int lid_min = (rdhLinkId == 15) ? dpwId * 12 : 0;
+      int lid_max = (rdhLinkId == 15) ? 11 + dpwId * 12 : 23;
       if (gPrintLevel >= 1)
         fprintf(flog, "Resetting decoding FSM: orbit=%d, previous=%d, links=%d-%d\n",
-                CRUh.hb_orbit, hb_orbit, lid_min, lid_max);
+            rdhOrbit, hb_orbit, lid_min, lid_max);
       for (int l = lid_min; l <= lid_max; l++) {
         for (int i = 0; i < 40; i++) {
           DualSampaReset(&(ds[cruId][l][i]));
@@ -1264,10 +1557,10 @@ void Decoder::processData(const char* buf, size_t size)
         }
       }
     }
-    hb_orbit = CRUh.hb_orbit;
+    hb_orbit = rdhOrbit;
 
-    int nGBTwords = CRUh.block_length / 16;
-    int n64bitWords = CRUh.block_length / 8;
+    int nGBTwords = payloadSize / 16;
+    int n64bitWords = payloadSize / 8;
 
     if (gPrintLevel >= 1)
       fprintf(flog, "Starting to decode buffer...\n");

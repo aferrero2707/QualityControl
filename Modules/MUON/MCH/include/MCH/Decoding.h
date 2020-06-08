@@ -7,9 +7,13 @@
 #define QC_MODULE_MUONCHAMBERS_DATA_DECODER_H
 
 #include "QualityControl/TaskInterface.h"
+#include "MCHBase/Digit.h"
+#include "MCHRawCommon/DataFormats.h"
+#include "MCHRawDecoder/PageDecoder.h"
+#include "MCHRawElecMap/Mapper.h"
+#include "MCHMappingInterface/Segmentation.h"
 #include "MCH/sampa_header.h"
 #include "MCH/Mapping.h"
-#include "MCHBase/Digit.h"
 
 using namespace o2::quality_control::core;
 
@@ -79,6 +83,8 @@ class Decoder
   // Definition of the methods for the template method pattern
   void initialize();
   void processData(const char* buf, size_t size);
+  void decodeBuffer(gsl::span<const std::byte> page);
+  void processDataAlt(const char* buf, size_t size);
   void decodeRaw(uint32_t* payload_buf, size_t nGBTwords, int cru_id, int link_id);
   void decodeUL(uint32_t* payload_buf, size_t nWords, int cru_id, int dpw_id);
   void clearHits();
@@ -97,6 +103,14 @@ class Decoder
   MapFEC& getMapFEC() { return mMapFEC; }
 
  private:
+  std::string readFileContent(const std::string& filename);
+  void initElec2DetMapper(const std::string& filename);
+  void initFee2SolarMapper(const std::string& filename);
+
+  o2::mch::raw::Elec2DetMapper mElec2Det{nullptr};
+  o2::mch::raw::FeeLink2SolarMapper mFee2Solar{nullptr};
+  o2::mch::raw::Solar2FeeLinkMapper mSolar2Fee{nullptr};
+  o2::mch::raw::PageDecoder mDecoder;
   int hb_orbit;
   DualSampa ds[MCH_MAX_CRU_ID][24][40];
   DualSampaGroup dsg[MCH_MAX_CRU_ID][24][8];
