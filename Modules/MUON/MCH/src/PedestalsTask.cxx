@@ -288,7 +288,7 @@ void PedestalsTask::save_histograms()
   mHistogramNoise->Write();
   mHistogramPedestals->Write();
 
-    for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < 2; i++) {
     auto ih = mHistogramPedestalsXY[i].begin();
     while (ih != mHistogramPedestalsXY[i].end()) {
       ih->second->Write();
@@ -333,7 +333,7 @@ void PedestalsTask::save_histograms()
     }
   }
 
-  f.ls();
+  //f.ls();
   f.Close();
 }
 
@@ -350,9 +350,11 @@ void PedestalsTask::monitorDataReadout(o2::framework::ProcessingContext& ctx)
 
   for (auto it = parser.begin(), end = parser.end(); it != end; ++it) {
     // retrieving RDH v4
-    auto const* rdh = it.get_if<o2::header::RAWDataHeaderV4>();
-    if (!rdh)
-      continue;
+    //auto const* rdh = it.get_if<o2::header::RDHAny>();
+    //auto const* rdh4 = it.get_if<o2::header::RAWDataHeaderV4>();
+    auto const* rdh6 = it.get_if<o2::header::RAWDataHeaderV6>();
+    //if (!rdh4 && !rdh6)
+    //  continue;
     // retrieving the raw pointer of the page
     auto const* raw = it.raw();
     // size of payload
@@ -574,6 +576,8 @@ void PedestalsTask::monitorDataDigits(const o2::framework::DataRef& input)
 
 void PedestalsTask::monitorData(o2::framework::ProcessingContext& ctx)
 {
+  //QcInfoLogger::GetInstance() << "monitorDataReadout" << AliceO2::InfoLogger::InfoLogger::endm;
+  //fprintf(flog, "\n================\nmonitorDataReadout\n================\n");
   monitorDataReadout(ctx);
   for (auto&& input : ctx.inputs()) {
     //QcInfoLogger::GetInstance() << "run PedestalsTask: input " << input.spec->binding << AliceO2::InfoLogger::InfoLogger::endm;

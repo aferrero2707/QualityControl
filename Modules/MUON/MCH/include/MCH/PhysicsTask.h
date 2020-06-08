@@ -84,9 +84,7 @@ class PhysicsTask /*final*/ : public TaskInterface // todo add back the "final" 
   std::map<int, TH2F*> mHistogramPseudoeffXY[3];
   TRandom3 rnd;
 
-
   GlobalHistogram* mHistogramPseudoeff[3];
-
 
   int mPrintLevel;
 };
