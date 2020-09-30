@@ -19,7 +19,7 @@
 /// lack input data. A typical usage would be:
 /// \code{.sh}
 /// o2-qc-run-producer | o2-qc --config json://${QUALITYCONTROL_ROOT}/etc/basic.json
-/// \endcode
+/// \endcodeModules/MUON/MCH/src/PhysicsCheck.cxx
 /// Please refer to Framework/example-default.json and Framework/basic.json to see how to configure a QC topology.
 /// To generate only the local part of the topology (which would run on main processing servers) use the '--local' flag.
 /// Similarly, to generate only the remote part (running on QC servers) add '--remote'. By default, the executable

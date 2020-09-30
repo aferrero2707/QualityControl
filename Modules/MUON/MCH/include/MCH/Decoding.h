@@ -37,6 +37,7 @@ struct SampaHit {
   uint32_t size, time;
   std::vector<uint16_t> samples;
   uint64_t csum;
+  int32_t delta;
   MapPad pad;
 };
 
@@ -57,6 +58,7 @@ struct DualSampa {
   int ndata[2][32];
   int nclus[2][32];
   double pedestal[2][32], noise[2][32];
+  int32_t min[2][32], max[2][32], delta[2][32];
   SampaHit hit;
 };
 
@@ -85,13 +87,30 @@ class Decoder
   std::vector<o2::mch::Digit>& getDigits() { return mDigits; }
   void reset();
 
-  int32_t getMapCRU(int cruid, int linkid) { return mMapCRU.getLink(cruid, linkid); }
+  int32_t getMapCRU(int cruid, int linkid)
+  {
+    return mMapCRU.getLink(cruid, linkid);
+  }
+
+  bool getMapCRUInv(int32_t link_id, int32_t& cruid, int32_t& crulink)
+  {
+    return mMapCRU.getLinkInv(link_id, cruid, crulink);
+  }
+
   int32_t getMapFEC(uint32_t link_id, uint32_t ds_addr, uint32_t& de, uint32_t& dsid)
   {
     if (!mMapFEC.getDSMapping(link_id, ds_addr, de, dsid))
       return -1;
     return de;
   }
+
+  int32_t getMapFECinv(uint32_t de, uint32_t dsid, uint32_t& link_id, uint32_t& ds_addr)
+  {
+    if (!mMapFEC.getDSMappingInv(de, dsid, link_id, ds_addr))
+      return -1;
+    return link_id;
+  }
+
   MapFEC& getMapFEC() { return mMapFEC; }
 
  private:
