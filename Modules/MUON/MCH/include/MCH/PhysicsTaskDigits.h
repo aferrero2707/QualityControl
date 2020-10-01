@@ -9,15 +9,14 @@
 #define QC_MODULE_MUONCHAMBERS_PHYSICSTASKDIGITS_H
 
 #include "QualityControl/TaskInterface.h"
-#include "MCH/Mapping.h"
-#include "MCH/Decoding.h"
+#include "MCHRawElecMap/Mapper.h"
 #include "MCHBase/Digit.h"
 #include "MCH/GlobalHistogram.h"
 
 class TH1F;
 class TH2F;
 
-#define MCH_FFEID_MAX (31*2 + 1)
+#define MCH_FEEID_NUM 64
 
 using namespace o2::quality_control::core;
 
@@ -33,7 +32,7 @@ namespace muonchambers
 /// \author Sebastien Perrin
 class PhysicsTaskDigits /*final*/ : public TaskInterface // todo add back the "final" when doxygen is fixed
 {
- public:
+public:
   /// \brief Constructor
   PhysicsTaskDigits();
   /// Destructor
@@ -49,47 +48,47 @@ class PhysicsTaskDigits /*final*/ : public TaskInterface // todo add back the "f
   void endOfActivity(Activity& activity) override;
   void reset() override;
 
+private:
   void plotDigit(const o2::mch::Digit& digit);
 
- private:
-  int count;
-  Decoder mDecoder;
-    
-  uint32_t norbits[MCH_FFEID_MAX+1][12];
-  uint32_t lastorbitseen[MCH_FFEID_MAX+1][12];
-    // Valeur de l'occupation moyenne sur chaque DE
-    double MeanOccupancyDE[1100];
-    // Valeur de l'occupation moyenne sur chaque DE sur le cycle écoulé, donc aussi arrays tampons pour faire le calcul (hits, orbits)
-    double MeanOccupancyDECycle[1100];
-    double LastMeanNhitsDE[1100];
-    double LastMeanNorbitsDE[1100];
-    double NewMeanNhitsDE[1100];
-    double NewMeanNorbitsDE[1100];
-    
-    int NbinsDE[1100];
-    
-  std::vector<std::unique_ptr<mch::Digit>> digits;
+  o2::mch::raw::Elec2DetMapper mElec2DetMapper;
+  o2::mch::raw::Det2ElecMapper mDet2ElecMapper;
+  o2::mch::raw::FeeLink2SolarMapper mFeeLink2SolarMapper;
+  o2::mch::raw::Solar2FeeLinkMapper mSolar2FeeLinkMapper;
 
-   // Histogrammes 2D de hits, orbits, occupation en mapping electronique
-    TH2F* mHistogramNHitsElec;
-    TH2F* mHistogramNorbitsElec;
-    TH2F* mHistogramOccupancyElec;
+  uint32_t norbits[MCH_FEEID_NUM][12];
+  uint32_t lastorbitseen[MCH_FEEID_NUM][12];
+  // Valeur de l'occupation moyenne sur chaque DE
+  double MeanOccupancyDE[1100];
+  // Valeur de l'occupation moyenne sur chaque DE sur le cycle écoulé, donc aussi arrays tampons pour faire le calcul (hits, orbits)
+  double MeanOccupancyDECycle[1100];
+  double LastMeanNhitsDE[1100];
+  double LastMeanNorbitsDE[1100];
+  double NewMeanNhitsDE[1100];
+  double NewMeanNorbitsDE[1100];
 
-      // TH1 de l'occupation moyenne par DE (intégré ou sur le cycle écoulé)
-      TH1F* mMeanOccupancyPerDE;
-      TH1F* mMeanOccupancyPerDECycle;
+  int NbinsDE[1100];
 
-    TH2F* mHistogramNhits[1100];
-    TH1F* mHistogramADCamplitude[1100];
-    std::vector<int> DEs;
-    std::map<int, TH1F*> mHistogramADCamplitudeDE;
-    std::map<int, TH2F*> mHistogramNhitsDE[2];
-    std::map<int, TH2F*> mHistogramNorbitsDE[2];
-    std::map<int, TH2F*> mHistogramNhitsHighAmplDE[2];
-    std::map<int, TH2F*> mHistogramOccupancyXY[2];
+  // Histogrammes 2D de hits, orbits, occupation en mapping electronique
+  TH2F* mHistogramNHitsElec;
+  TH2F* mHistogramNorbitsElec;
+  TH2F* mHistogramOccupancyElec;
 
-    GlobalHistogram* mHistogramOccupancy[1];
-    GlobalHistogram* mHistogramOrbits[1];
+  // TH1 de l'occupation moyenne par DE (intégré ou sur le cycle écoulé)
+  TH1F* mMeanOccupancyPerDE;
+  TH1F* mMeanOccupancyPerDECycle;
+
+  TH2F* mHistogramNhits[1100];
+  TH1F* mHistogramADCamplitude[1100];
+  std::vector<int> DEs;
+  std::map<int, TH1F*> mHistogramADCamplitudeDE;
+  std::map<int, TH2F*> mHistogramNhitsDE[2];
+  std::map<int, TH2F*> mHistogramNorbitsDE[2];
+  std::map<int, TH2F*> mHistogramNhitsHighAmplDE[2];
+  std::map<int, TH2F*> mHistogramOccupancyXY[2];
+
+  GlobalHistogram* mHistogramOccupancy[1];
+  GlobalHistogram* mHistogramOrbits[1];
 };
 
 } // namespace muonchambers
