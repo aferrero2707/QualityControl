@@ -113,15 +113,15 @@ void PhysicsTaskDigits::initialize(o2::framework::InitContext& /*ctx*/)
 
   mHistogramNorbitsElec = new TH2F("QcMuonChambers_Norbits_Elec", "QcMuonChambers - Norbits",
       MCH_FEEID_NUM*12*40, 0, MCH_FEEID_NUM*12*40, 64, 0, 64);
-    mHistogramNorbitsElec->SetOption("colz");
+  mHistogramNorbitsElec->SetOption("colz");
   getObjectsManager()->startPublishing(mHistogramNorbitsElec);
   mHistogramNHitsElec = new TH2F("QcMuonChambers_NHits_Elec", "QcMuonChambers - NHits",
       MCH_FEEID_NUM*12*40, 0, MCH_FEEID_NUM*12*40, 64, 0, 64);
-    mHistogramNHitsElec->SetOption("colz");
+  mHistogramNHitsElec->SetOption("colz");
   getObjectsManager()->startPublishing(mHistogramNHitsElec);
   mHistogramOccupancyElec = new TH2F("QcMuonChambers_Occupancy_Elec", "QcMuonChambers - Occupancy (MHz)",
       MCH_FEEID_NUM*12*40, 0, MCH_FEEID_NUM*12*40, 64, 0, 64);
-    mHistogramOccupancyElec->SetOption("colz");
+  mHistogramOccupancyElec->SetOption("colz");
   getObjectsManager()->startPublishing(mHistogramOccupancyElec);
 
   // 1D histograms for mean occupancy per DE (integrated or per elapsed cycle)
@@ -133,13 +133,13 @@ void PhysicsTaskDigits::initialize(o2::framework::InitContext& /*ctx*/)
 
   mHistogramOccupancy[0] = new GlobalHistogram("QcMuonChambers_Occupancy_den", "Occupancy (MHz)");
   mHistogramOccupancy[0]->init();
-    mHistogramOccupancy[0]->SetOption("colz");
-    getObjectsManager()->startPublishing(mHistogramOccupancy[0]);
+  mHistogramOccupancy[0]->SetOption("colz");
+  getObjectsManager()->startPublishing(mHistogramOccupancy[0]);
 
   mHistogramOrbits[0] = new GlobalHistogram("QcMuonChambers_Orbits_den", "Orbits");
   mHistogramOrbits[0]->init();
-    mHistogramOrbits[0]->SetOption("colz");
-    getObjectsManager()->startPublishing(mHistogramOrbits[0]);
+  mHistogramOrbits[0]->SetOption("colz");
+  getObjectsManager()->startPublishing(mHistogramOrbits[0]);
 
   fprintf(stdout, "PhysicsTaskDigits initialization finished\n");
 }

@@ -331,7 +331,6 @@ bool PhysicsTaskPreclusters::plotPrecluster(const o2::mch::PreCluster& preCluste
   bool cathode[2] = {false, false};
   float chargeSum[2] = {0, 0};
   float chargeMax[2] = {0, 0};
-    int padhit[2]= {0,0};
 
   int detid = preClusterDigits[0].getDetID();
   const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(detid);
@@ -343,7 +342,6 @@ bool PhysicsTaskPreclusters::plotPrecluster(const o2::mch::PreCluster& preCluste
     // cathode index
     int cid = segment.isBendingPad(padid) ? 0 : 1;
     cathode[cid] = true;
-      padhit[cid] += 1;
     chargeSum[cid] += digit.getADC();
 
     if (digit.getADC() > chargeMax[cid]) {
@@ -376,15 +374,15 @@ bool PhysicsTaskPreclusters::plotPrecluster(const o2::mch::PreCluster& preCluste
   }
 
   double Xcog, Ycog;
-    bool isWide[2];
+  bool isWide[2];
   CoG(preClusterDigits, Xcog, Ycog, isWide);
 
-    if((cathode[0] && isWide[0]) || (cathode[1] && isWide[1]) || (cathode[0] && cathode[1])){
-      auto hXY0 = mHistogramPreclustersXY[0].find(detid);
-      if ((hXY0 != mHistogramPreclustersXY[0].end()) && (hXY0->second != NULL)) {
-        hXY0->second->Fill(Xcog, Ycog);
-      }
+  if((cathode[0] && isWide[0]) || (cathode[1] && isWide[1]) || (cathode[0] && cathode[1])){
+    auto hXY0 = mHistogramPreclustersXY[0].find(detid);
+    if ((hXY0 != mHistogramPreclustersXY[0].end()) && (hXY0->second != NULL)) {
+      hXY0->second->Fill(Xcog, Ycog);
     }
+  }
 
   if(cathode[0] && isWide[0]) {
     auto hXY1 = mHistogramPreclustersXY[1].find(detid);
