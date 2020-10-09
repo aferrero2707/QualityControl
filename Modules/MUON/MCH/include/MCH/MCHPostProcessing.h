@@ -56,16 +56,15 @@ class MCHPostProcessing : public quality_control::postprocessing::PostProcessing
     Int_t runNumber = 0;
   };
 
-  void trendValues(o2::quality_control::repository::DatabaseInterface&);
-  void storePlots(o2::quality_control::repository::DatabaseInterface&);
-  void storeTrend(o2::quality_control::repository::DatabaseInterface&);
+  void trendValues(uint64_t timestamp, o2::quality_control::repository::DatabaseInterface&);
+  void storePlots(uint64_t timestamp, o2::quality_control::repository::DatabaseInterface&);
+  void storeTrend(uint64_t timestamp, o2::quality_control::repository::DatabaseInterface&);
 
   quality_control::postprocessing::TrendingTaskConfig mConfig;
   MetaData mMetaData;
   UInt_t mTime;
   std::unique_ptr<TTree> mTrend;
   std::unordered_map<std::string, std::unique_ptr<quality_control::postprocessing::Reductor>> mReductors;
-  quality_control::repository::DatabaseInterface* mDatabase = nullptr;
 };
 
 }

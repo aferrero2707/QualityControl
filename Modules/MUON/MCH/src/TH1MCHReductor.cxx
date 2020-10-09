@@ -29,7 +29,7 @@ void* TH1MCHReductor::getBranchAddress()
 
 const char* TH1MCHReductor::getBranchLeafList()
 {
-  return "occ819/D:occ5I:occ5O:occ6I:occ6O:occ7I:occ7O:occ8I:occ8O:occ9I:occ9O:occ10I:occ10O:entries";
+  return "occ500/D:occ501:occ502:occ503:occ504:occ505:occ506:occ507:occ508:occ509:occ510:occ511:occ512:occ513:occ514:occ515:occ516:occ517:occ600:occ601:occ602:occ603:occ604:occ605:occ606:occ607:occ608:occ609:occ610:occ611:occ612:occ613:occ614:occ615:occ616:occ617:occ700:occ701:occ702:occ703:occ704:occ705:occ706:occ707:occ708:occ709:occ710:occ711:occ712:occ713:occ714:occ715:occ716:occ717:occ718:occ719:occ720:occ721:occ722:occ723:occ724:occ725:occ800:occ801:occ802:occ803:occ804:occ805:occ806:occ807:occ808:occ809:occ810:occ811:occ812:occ813:occ814:occ815:occ816:occ817:occ818:occ819:occ820:occ821:occ822:occ823:occ824:occ825:occ900:occ901:occ902:occ903:occ904:occ905:occ906:occ907:occ908:occ909:occ910:occ911:occ912:occ913:occ914:occ915:occ916:occ917:occ918:occ919:occ920:occ921:occ922:occ923:occ924:occ925:occ1000:occ1001:occ1002:occ1003:occ1004:occ1005:occ1006:occ1007:occ1008:occ1009:occ1010:occ1011:occ1012:occ1013:occ1014:occ1015:occ1016:occ1017:occ1018:occ1019:occ1020:occ1021:occ1022:occ1023:occ1024:occ1025:occ5I:occ5O:occ6I:occ6O:occ7I:occ7O:occ8I:occ8O:occ9I:occ9O:occ10I:occ10O:entries";
 }
 
 void TH1MCHReductor::update(TObject* obj)
@@ -38,7 +38,24 @@ void TH1MCHReductor::update(TObject* obj)
   if (histo) {
       double mean = 0;
     mStats.entries = histo->GetEntries();
-    mStats.indiv_occs.indiv[0] = histo->GetBinContent(819+1);
+      for(int i=0; i<=17; i++){
+          mStats.indiv_occs.indiv[i] = histo->GetBinContent(500 +i +1);
+      }
+      for(int i=18; i<=35; i++){
+          mStats.indiv_occs.indiv[i] = histo->GetBinContent(600 +(i-18) +1);
+      }
+      for(int i=36; i<=61; i++){
+          mStats.indiv_occs.indiv[i] = histo->GetBinContent(700 +(i-36) +1);
+      }
+      for(int i=62; i<=87; i++){
+          mStats.indiv_occs.indiv[i] = histo->GetBinContent(800 +(i-62) +1);
+      }
+      for(int i=88; i<=113; i++){
+          mStats.indiv_occs.indiv[i] = histo->GetBinContent(900 +(i-88) +1);
+      }
+      for(int i=114; i<=139; i++){
+          mStats.indiv_occs.indiv[i] = histo->GetBinContent(1000 +(i-114) +1);
+      }
       
       //5I
       for(int i : detCH5I){
@@ -142,7 +159,7 @@ void TH1MCHReductor::update(TObject* obj)
 //      mean /= 13;
 //      mStats.halfch_occs.halfch[7] = mean;
     
-      std::cout << "Value DE819 obtained from reductor " << mStats.indiv_occs.indiv[0] << std::endl;
+      std::cout << "Value DE500 obtained from reductor " << mStats.indiv_occs.indiv[0] << std::endl;
       std::cout << "Value Ch5I obtained from reductor " << mStats.halfch_occs.halfch[0] << std::endl;
       std::cout << "Value Ch8O obtained from reductor " << mStats.halfch_occs.halfch[7] << std::endl;
       
