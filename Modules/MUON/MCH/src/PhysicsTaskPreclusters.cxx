@@ -13,8 +13,6 @@
 #include <TFile.h>
 #include <algorithm>
 
-#include "DPLUtils/DPLRawParser.h"
-#include "Headers/RAWDataHeader.h"
 #include "MCH/PhysicsTaskPreclusters.h"
 #ifdef MCH_HAS_MAPPING_FACTORY
 #include "MCHMappingFactory/CreateSegmentation.h"
@@ -26,10 +24,9 @@
 #include "QualityControl/QcInfoLogger.h"
 
 using namespace std;
+using namespace o2::mch::raw;
 
 #define QC_MCH_SAVE_TEMP_ROOTFILE 1
-
-static FILE* flog = NULL;
 
 struct CRUheader {
   uint8_t header_version;
@@ -61,18 +58,19 @@ namespace quality_control_modules
 {
 namespace muonchambers
 {
-PhysicsTaskPreclusters::PhysicsTaskPreclusters() : TaskInterface(), count(1) {}
+PhysicsTaskPreclusters::PhysicsTaskPreclusters() : TaskInterface() {}
 
-PhysicsTaskPreclusters::~PhysicsTaskPreclusters() { fclose(flog); }
+PhysicsTaskPreclusters::~PhysicsTaskPreclusters() {}
 
 void PhysicsTaskPreclusters::initialize(o2::framework::InitContext& /*ctx*/)
 {
   QcInfoLogger::GetInstance() << "initialize PhysicsTaskPreclusters" << AliceO2::InfoLogger::InfoLogger::endm;
   fprintf(stdout, "initialize PhysicsTaskPreclusters\n");
 
-  mDecoder.initialize();
-
-  flog = stdout;
+  mElec2DetMapper = createElec2DetMapper<ElectronicMapperGenerated>();
+  mDet2ElecMapper = createDet2ElecMapper<ElectronicMapperGenerated>();
+  mFeeLink2SolarMapper = createFeeLink2SolarMapper<ElectronicMapperGenerated>();
+  mSolar2FeeLinkMapper = createSolar2FeeLinkMapper<ElectronicMapperGenerated>();
 
   for(int de = 0; de < 1100; de++) {
     MeanPseudoeffDE[de] = MeanPseudoeffDECycle[de] = LastPreclBNBDE[de] = NewPreclBNBDE[de] = LastPreclNumDE[de] = NewPreclNumDE[de] = 0;
@@ -84,9 +82,7 @@ void PhysicsTaskPreclusters::initialize(o2::framework::InitContext& /*ctx*/)
     mMeanPseudoeffPerDECycle = new TH1F("QcMuonChambers_MeanPseudoeff_OnCycle", "Mean Pseudoeff of each DE during the cycle", 1100, -0.5, 1099.5);
     getObjectsManager()->startPublishing(mMeanPseudoeffPerDECycle);
 
-  for (int de = 0; de < 1030; de++){
-    const o2::mch::mapping::Segmentation* segment = &(o2::mch::mapping::segmentation(de));
-    if (segment == nullptr) continue;
+  for (auto de: o2::mch::raw::deIdsForAllMCH){
 
     TH1F* h = new TH1F(TString::Format("QcMuonChambers_Cluster_Charge_DE%03d", de),
         TString::Format("QcMuonChambers - cluster charge (DE%03d)", de), 1000, 0, 50000);
@@ -128,12 +124,18 @@ void PhysicsTaskPreclusters::initialize(o2::framework::InitContext& /*ctx*/)
     }
   }
 
-  mHistogramPseudoeff[0] = new GlobalHistogram("QcMuonChambers_Pseudoeff_den", "Pseudo-efficiency");
+  mHistogramPseudoeff[0] = new GlobalHistogram("QcMuonChambers_Pseudoeff_den", "Pseudo-efficiency cluster total count");
   mHistogramPseudoeff[0]->init();
-  mHistogramPseudoeff[1] = new GlobalHistogram("QcMuonChambers_Pseudoeff", "Pseudo-efficiency");
+  mHistogramPseudoeff[0]->SetOption("colz");
+  getObjectsManager()->startPublishing(mHistogramPseudoeff[0]);
+  mHistogramPseudoeff[1] = new GlobalHistogram("QcMuonChambers_Pseudoeff", "Pseudo-efficiency - Clusters on B or NB");
   mHistogramPseudoeff[1]->init();
-  mHistogramPseudoeff[2] = new GlobalHistogram("QcMuonChambers_Pseudoeff_BNB", "Pseudo-efficiency - B+NB");
+  mHistogramPseudoeff[1]->SetOption("colz");
+  getObjectsManager()->startPublishing(mHistogramPseudoeff[1]);
+  mHistogramPseudoeff[2] = new GlobalHistogram("QcMuonChambers_Pseudoeff_BNB", "Pseudo-efficiency - Clusters on B and NB");
   mHistogramPseudoeff[2]->init();
+  mHistogramPseudoeff[2]->SetOption("colz");
+  getObjectsManager()->startPublishing(mHistogramPseudoeff[2]);
 }
 
 void PhysicsTaskPreclusters::startOfActivity(Activity& /*activity*/)
@@ -148,7 +150,7 @@ void PhysicsTaskPreclusters::startOfCycle()
 
 void PhysicsTaskPreclusters::monitorDataPreclusters(o2::framework::ProcessingContext& ctx)
 {
-    fprintf(flog, "\n================\nmonitorDataPreClusters\n================\n");
+    fprintf(stdout, "\n================\nmonitorDataPreClusters\n================\n");
   // get the input preclusters and associated digits
   auto preClusters = ctx.inputs().get<gsl::span<o2::mch::PreCluster>>("preclusters");
   auto digits = ctx.inputs().get<gsl::span<o2::mch::Digit>>("preclusterdigits");
@@ -187,7 +189,7 @@ void PhysicsTaskPreclusters::monitorData(o2::framework::ProcessingContext& ctx)
 //_________________________________________________________________________________________________
 static void CoG(gsl::span<const o2::mch::Digit> precluster, double& Xcog, double& Ycog, bool isWide[2])
 {
-    fprintf(flog, "\n================\nCoG\n================\n");
+    fprintf(stdout, "\n================\nCoG\n================\n");
     
   double xmin = 1E9;
   double ymin = 1E9;
@@ -195,9 +197,9 @@ static void CoG(gsl::span<const o2::mch::Digit> precluster, double& Xcog, double
   double ymax = -1E9;
   double charge[] = { 0.0, 0.0 };
   int multiplicity[] = { 0, 0 };
-    double padXPos[] = {0,0};
-    double padYPos[] = {0,0};
-    isWide[0] = isWide[1] = false;
+  double padXPos[] = {0,0};
+  double padYPos[] = {0,0};
+  isWide[0] = isWide[1] = false;
 
   double x[] = { 0.0, 0.0 };
   double y[] = { 0.0, 0.0 };
@@ -412,7 +414,6 @@ void PhysicsTaskPreclusters::endOfCycle()
   QcInfoLogger::GetInstance() << "endOfCycle" << AliceO2::InfoLogger::InfoLogger::endm;
   for(int de = 100; de <= 1030; de++) {
     for(int i = 0; i < 3; i++) {
-      //std::cout<<"DE "<<de<<"  i "<<i<<std::endl;
       auto ih = mHistogramPreclustersXY[i+1].find(de);
       if (ih == mHistogramPreclustersXY[i+1].end()) {
         continue;
@@ -496,8 +497,6 @@ void PhysicsTaskPreclusters::endOfCycle()
           }
           hMean->Write();
           hMeanCycle->Write();
-        std::cout << "MeanPseudoeff of DE819 since start is: " << MeanPseudoeffDE[819] << std::endl;
-          std::cout << "MeanPseudoeff of DE819 in last cycle is: " << MeanPseudoeffDECycle[819] << std::endl;
       }
     
     {
@@ -525,7 +524,6 @@ void PhysicsTaskPreclusters::endOfCycle()
     mHistogramPseudoeff[1]->Write();
     mHistogramPseudoeff[2]->Write();
 
-    //f.ls();
     f.Close();
     
 #endif

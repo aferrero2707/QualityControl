@@ -80,7 +80,6 @@ private:
 
   TH2F* mHistogramNhits[1100];
   TH1F* mHistogramADCamplitude[1100];
-  std::vector<int> DEs;
   std::map<int, TH1F*> mHistogramADCamplitudeDE;
   std::map<int, TH2F*> mHistogramNhitsDE[2];
   std::map<int, TH2F*> mHistogramNorbitsDE[2];
