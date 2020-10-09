@@ -26,7 +26,7 @@
 using namespace std;
 using namespace o2::mch::raw;
 
-#define QC_MCH_SAVE_TEMP_ROOTFILE 1
+// #define QC_MCH_SAVE_TEMP_ROOTFILE 1
 
 struct CRUheader {
   uint8_t header_version;
@@ -65,12 +65,6 @@ PhysicsTaskPreclusters::~PhysicsTaskPreclusters() {}
 void PhysicsTaskPreclusters::initialize(o2::framework::InitContext& /*ctx*/)
 {
   QcInfoLogger::GetInstance() << "initialize PhysicsTaskPreclusters" << AliceO2::InfoLogger::InfoLogger::endm;
-  fprintf(stdout, "initialize PhysicsTaskPreclusters\n");
-
-  mElec2DetMapper = createElec2DetMapper<ElectronicMapperGenerated>();
-  mDet2ElecMapper = createDet2ElecMapper<ElectronicMapperGenerated>();
-  mFeeLink2SolarMapper = createFeeLink2SolarMapper<ElectronicMapperGenerated>();
-  mSolar2FeeLinkMapper = createSolar2FeeLinkMapper<ElectronicMapperGenerated>();
 
   for(int de = 0; de < 1100; de++) {
     MeanPseudoeffDE[de] = MeanPseudoeffDECycle[de] = LastPreclBNBDE[de] = NewPreclBNBDE[de] = LastPreclNumDE[de] = NewPreclNumDE[de] = 0;
@@ -150,7 +144,6 @@ void PhysicsTaskPreclusters::startOfCycle()
 
 void PhysicsTaskPreclusters::monitorDataPreclusters(o2::framework::ProcessingContext& ctx)
 {
-    fprintf(stdout, "\n================\nmonitorDataPreClusters\n================\n");
   // get the input preclusters and associated digits
   auto preClusters = ctx.inputs().get<gsl::span<o2::mch::PreCluster>>("preclusters");
   auto digits = ctx.inputs().get<gsl::span<o2::mch::Digit>>("preclusterdigits");
@@ -189,7 +182,6 @@ void PhysicsTaskPreclusters::monitorData(o2::framework::ProcessingContext& ctx)
 //_________________________________________________________________________________________________
 static void CoG(gsl::span<const o2::mch::Digit> precluster, double& Xcog, double& Ycog, bool isWide[2])
 {
-    fprintf(stdout, "\n================\nCoG\n================\n");
     
   double xmin = 1E9;
   double ymin = 1E9;
@@ -279,7 +271,6 @@ static void CoG(gsl::span<const o2::mch::Digit> precluster, double& Xcog, double
 
 void PhysicsTaskPreclusters::printPreclusters(gsl::span<const o2::mch::PreCluster> preClusters, gsl::span<const o2::mch::Digit> digits)
 {
-  std::cout<<"\n\n============\n";
   for(auto& preCluster : preClusters) {
     // get the digits of this precluster
     auto preClusterDigits = digits.subspan(preCluster.firstDigit, preCluster.nDigits);
@@ -309,15 +300,13 @@ void PhysicsTaskPreclusters::printPreclusters(gsl::span<const o2::mch::PreCluste
       bool isWide[2];
     CoG(preClusterDigits, Xcog, Ycog, isWide);
 
-    std::cout<<"[pre-cluster] charge = "<<chargeSum[0]<<" "<<chargeSum[1]<<"   CoG = "<<Xcog<<" "<<Ycog<<std::endl;
+     QcInfoLogger::GetInstance() <<"[pre-cluster] charge = "<<chargeSum[0]<<" "<<chargeSum[1]<<"   CoG = "<<Xcog<<" "<< AliceO2::InfoLogger::InfoLogger::endm;
     for (auto& d : preClusterDigits) {
       float X = segment.padPositionX(d.getPadID());
       float Y = segment.padPositionY(d.getPadID());
       bool bend = !segment.isBendingPad(d.getPadID());
-      std::cout << fmt::format("  DE {:4d}  PAD {:5d}  ADC {:6d}  TIME ({} {} {:4d})",
-          d.getDetID(), d.getPadID(), d.getADC(), d.getTime().orbit, d.getTime().bunchCrossing, d.getTime().sampaTime);
-      std::cout << fmt::format("  CATHODE {}  PAD_XY {:+2.2f} , {:+2.2f}", (int)bend, X, Y);
-      std::cout << std::endl;
+      QcInfoLogger::GetInstance() << fmt::format("  DE {:4d}  PAD {:5d}  ADC {:6d}  TIME ({} {} {:4d})",
+          d.getDetID(), d.getPadID(), d.getADC(), d.getTime().orbit, d.getTime().bunchCrossing, d.getTime().sampaTime) << "\n" << fmt::format("  CATHODE {}  PAD_XY {:+2.2f} , {:+2.2f}", (int)bend, X, Y) << AliceO2::InfoLogger::InfoLogger::endm;
     }
   }
 }
@@ -465,7 +454,6 @@ void PhysicsTaskPreclusters::endOfCycle()
         if ((hBNB != mHistogramPreclustersXY[3].end()) && (hBNB->second != NULL) && (hnum != mHistogramPreclustersXY[0].end()) && (hnum->second != NULL)) {
               NewPreclBNBDE[de] = 0;
               NewPreclNumDE[de] = 0;
-        //  std::cout << "On va entrer dans la boucle pour lire Elec last cycle" << std::endl;
           for(int binx=1; binx<hBNB->second->GetXaxis()->GetNbins()+1; binx++){
               for(int biny=1; biny<hBNB->second->GetYaxis()->GetNbins()+1; biny++){
                           NewPreclBNBDE[de] += hBNB->second->GetBinContent(binx, biny);

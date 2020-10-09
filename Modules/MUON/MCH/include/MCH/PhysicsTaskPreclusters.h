@@ -11,8 +11,6 @@
 #include <vector>
 
 #include "QualityControl/TaskInterface.h"
-#include "MCHRawElecMap/Mapper.h"
-#include "MCHBase/Digit.h"
 #include "MCH/GlobalHistogram.h"
 #include "MCHBase/Digit.h"
 #include "MCHBase/PreCluster.h"
@@ -57,11 +55,6 @@ class PhysicsTaskPreclusters /*final*/ : public TaskInterface // todo add back t
   void printPreclusters(gsl::span<const o2::mch::PreCluster> preClusters, gsl::span<const o2::mch::Digit> digits);
 
  private:
-    
-    o2::mch::raw::Elec2DetMapper mElec2DetMapper;
-    o2::mch::raw::Det2ElecMapper mDet2ElecMapper;
-    o2::mch::raw::FeeLink2SolarMapper mFeeLink2SolarMapper;
-    o2::mch::raw::Solar2FeeLinkMapper mSolar2FeeLinkMapper;
     
     double MeanPseudoeffDE[1100];
     double MeanPseudoeffDECycle[1100];

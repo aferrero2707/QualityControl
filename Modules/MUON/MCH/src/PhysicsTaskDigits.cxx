@@ -24,7 +24,7 @@
 using namespace std;
 using namespace o2::mch::raw;
 
-#define QC_MCH_SAVE_TEMP_ROOTFILE 1
+//#define QC_MCH_SAVE_TEMP_ROOTFILE 1
 
 namespace o2
 {
@@ -40,7 +40,6 @@ PhysicsTaskDigits::~PhysicsTaskDigits() {}
 void PhysicsTaskDigits::initialize(o2::framework::InitContext& /*ctx*/)
 {
   QcInfoLogger::GetInstance() << "initialize PhysicsTaskDigits" << AliceO2::InfoLogger::InfoLogger::endm;
-  fprintf(stdout, "initialize PhysicsTaskDigits\n");
 
   mElec2DetMapper = createElec2DetMapper<ElectronicMapperGenerated>();
   mDet2ElecMapper = createDet2ElecMapper<ElectronicMapperGenerated>();
@@ -140,8 +139,6 @@ void PhysicsTaskDigits::initialize(o2::framework::InitContext& /*ctx*/)
   mHistogramOrbits[0]->init();
   mHistogramOrbits[0]->SetOption("colz");
   getObjectsManager()->startPublishing(mHistogramOrbits[0]);
-
-  fprintf(stdout, "PhysicsTaskDigits initialization finished\n");
 }
 
 void PhysicsTaskDigits::startOfActivity(Activity& /*activity*/)
@@ -156,7 +153,6 @@ void PhysicsTaskDigits::startOfCycle()
 
 void PhysicsTaskDigits::monitorDataDigits(o2::framework::ProcessingContext& ctx)
 {
-  fprintf(stdout, "\n================\nmonitorDataDigits\n================\n");
 
   // get the input preclusters and associated digits with the orbit information
   auto digits = ctx.inputs().get<gsl::span<o2::mch::Digit>>("digits");
