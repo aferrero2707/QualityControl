@@ -50,14 +50,14 @@ void PhysicsTaskDigits::initialize(o2::framework::InitContext& /*ctx*/)
     for (int linkid = 0; linkid < 12; linkid++) {
       int index = 12 * feeid + linkid;
       mHistogramNhits[index] = new TH2F(TString::Format("QcMuonChambers_NHits_FEE%01d_LINK%02d", feeid, linkid),
-          TString::Format("QcMuonChambers - Number of hits (FEE link %02d)", index), 40, 0, 40, 64, 0, 64);
+                                        TString::Format("QcMuonChambers - Number of hits (FEE link %02d)", index), 40, 0, 40, 64, 0, 64);
       mHistogramADCamplitude[index] = new TH1F(TString::Format("QcMuonChambers_ADC_Amplitude_FEE%01d_LINK%02d", feeid, linkid),
-          TString::Format("QcMuonChambers - ADC amplitude (FEE link %02d)", index), 5000, 0, 5000);
+                                               TString::Format("QcMuonChambers - ADC amplitude (FEE link %02d)", index), 5000, 0, 5000);
     }
   }
-  for(auto de: o2::mch::raw::deIdsForAllMCH) {
+  for (auto de : o2::mch::raw::deIdsForAllMCH) {
     TH1F* h = new TH1F(TString::Format("QcMuonChambers_ADCamplitude_DE%03d", de),
-        TString::Format("QcMuonChambers - ADC amplitude (DE%03d)", de), 5000, 0, 5000);
+                       TString::Format("QcMuonChambers - ADC amplitude (DE%03d)", de), 5000, 0, 5000);
     mHistogramADCamplitudeDE.insert(make_pair(de, h));
 
     float Xsize = 40 * 5;
@@ -67,59 +67,59 @@ void PhysicsTaskDigits::initialize(o2::framework::InitContext& /*ctx*/)
     float scale = 0.5;
 
     TH2F* h2 = new TH2F(TString::Format("QcMuonChambers_Nhits_DE%03d_B", de),
-        TString::Format("QcMuonChambers - Number of hits (DE%03d B)", de), Xsize * 2, -Xsize2, Xsize2, Ysize * 2, -Ysize2, Ysize2);
+                        TString::Format("QcMuonChambers - Number of hits (DE%03d B)", de), Xsize * 2, -Xsize2, Xsize2, Ysize * 2, -Ysize2, Ysize2);
     mHistogramNhitsDE[0].insert(make_pair(de, h2));
-   // getObjectsManager()->startPublishing(h2);
+    // getObjectsManager()->startPublishing(h2);
     h2 = new TH2F(TString::Format("QcMuonChambers_Nhits_DE%03d_NB", de),
-        TString::Format("QcMuonChambers - Number of hits (DE%03d NB)", de), Xsize * 2, -Xsize2, Xsize2, Ysize * 2, -Ysize2, Ysize2);
+                  TString::Format("QcMuonChambers - Number of hits (DE%03d NB)", de), Xsize * 2, -Xsize2, Xsize2, Ysize * 2, -Ysize2, Ysize2);
     mHistogramNhitsDE[1].insert(make_pair(de, h2));
-   // getObjectsManager()->startPublishing(h2);
+    // getObjectsManager()->startPublishing(h2);
     h2 = new TH2F(TString::Format("QcMuonChambers_Nhits_HighAmpl_DE%03d_B", de),
-        TString::Format("QcMuonChambers - Number of hits for Csum>500 (DE%03d B)", de), Xsize * 2, -Xsize2, Xsize2, Ysize * 2, -Ysize2, Ysize2);
+                  TString::Format("QcMuonChambers - Number of hits for Csum>500 (DE%03d B)", de), Xsize * 2, -Xsize2, Xsize2, Ysize * 2, -Ysize2, Ysize2);
     mHistogramNhitsHighAmplDE[0].insert(make_pair(de, h2));
     h2 = new TH2F(TString::Format("QcMuonChambers_Nhits_HighAmpl_DE%03d_NB", de),
-        TString::Format("QcMuonChambers - Number of hits for Csum>500 (DE%03d NB)", de), Xsize * 2, -Xsize2, Xsize2, Ysize * 2, -Ysize2, Ysize2);
+                  TString::Format("QcMuonChambers - Number of hits for Csum>500 (DE%03d NB)", de), Xsize * 2, -Xsize2, Xsize2, Ysize * 2, -Ysize2, Ysize2);
     mHistogramNhitsHighAmplDE[1].insert(make_pair(de, h2));
     h2 = new TH2F(TString::Format("QcMuonChambers_Norbits_DE%03d_B", de),
-        TString::Format("QcMuonChambers - Number of orbits (DE%03d B)", de), Xsize * 2, -Xsize2, Xsize2, Ysize * 2, -Ysize2, Ysize2);
+                  TString::Format("QcMuonChambers - Number of orbits (DE%03d B)", de), Xsize * 2, -Xsize2, Xsize2, Ysize * 2, -Ysize2, Ysize2);
     mHistogramNorbitsDE[0].insert(make_pair(de, h2));
     h2 = new TH2F(TString::Format("QcMuonChambers_Norbits_DE%03d_NB", de),
-        TString::Format("QcMuonChambers - Number of orbits (DE%03d NB)", de), Xsize * 2, -Xsize2, Xsize2, Ysize * 2, -Ysize2, Ysize2);
+                  TString::Format("QcMuonChambers - Number of orbits (DE%03d NB)", de), Xsize * 2, -Xsize2, Xsize2, Ysize * 2, -Ysize2, Ysize2);
     mHistogramNorbitsDE[1].insert(make_pair(de, h2));
 
     {
       TH2F* hXY = new TH2F(TString::Format("QcMuonChambers_Occupancy_B_XY_%03d", de),
-          TString::Format("QcMuonChambers - Occupancy XY (DE%03d B) (MHz)", de), Xsize / scale, -Xsize2, Xsize2, Ysize / scale, -Ysize2, Ysize2);
+                           TString::Format("QcMuonChambers - Occupancy XY (DE%03d B) (MHz)", de), Xsize / scale, -Xsize2, Xsize2, Ysize / scale, -Ysize2, Ysize2);
       mHistogramOccupancyXY[0].insert(make_pair(de, hXY));
-     // getObjectsManager()->startPublishing(hXY);
+      // getObjectsManager()->startPublishing(hXY);
       hXY = new TH2F(TString::Format("QcMuonChambers_Occupancy_NB_XY_%03d", de),
-          TString::Format("QcMuonChambers - Occupancy XY (DE%03d NB) (MHz)", de), Xsize / scale, -Xsize2, Xsize2, Ysize / scale, -Ysize2, Ysize2);
+                     TString::Format("QcMuonChambers - Occupancy XY (DE%03d NB) (MHz)", de), Xsize / scale, -Xsize2, Xsize2, Ysize / scale, -Ysize2, Ysize2);
       mHistogramOccupancyXY[1].insert(make_pair(de, hXY));
-    //  getObjectsManager()->startPublishing(hXY);
+      //  getObjectsManager()->startPublishing(hXY);
     }
   }
 
-  for(int fee = 0; fee < MCH_FEEID_NUM; fee++) {
-    for(int link = 0; link < 12; link++) {
+  for (int fee = 0; fee < MCH_FEEID_NUM; fee++) {
+    for (int link = 0; link < 12; link++) {
       norbits[fee][link] = lastorbitseen[fee][link] = 0;
     }
   }
-  for(int de = 0; de < 1100; de++) {
+  for (int de = 0; de < 1100; de++) {
     MeanOccupancyDE[de] = MeanOccupancyDECycle[de] = LastMeanNhitsDE[de] = LastMeanNorbitsDE[de] = NewMeanNhitsDE[de] = NewMeanNorbitsDE[de] = NbinsDE[de] = 0;
   }
 
   // Histograms using the Electronic Mapping
 
   mHistogramNorbitsElec = new TH2F("QcMuonChambers_Norbits_Elec", "QcMuonChambers - Norbits",
-      MCH_FEEID_NUM*12*40, 0, MCH_FEEID_NUM*12*40, 64, 0, 64);
+                                   MCH_FEEID_NUM * 12 * 40, 0, MCH_FEEID_NUM * 12 * 40, 64, 0, 64);
   mHistogramNorbitsElec->SetOption("colz");
   getObjectsManager()->startPublishing(mHistogramNorbitsElec);
   mHistogramNHitsElec = new TH2F("QcMuonChambers_NHits_Elec", "QcMuonChambers - NHits",
-      MCH_FEEID_NUM*12*40, 0, MCH_FEEID_NUM*12*40, 64, 0, 64);
+                                 MCH_FEEID_NUM * 12 * 40, 0, MCH_FEEID_NUM * 12 * 40, 64, 0, 64);
   mHistogramNHitsElec->SetOption("colz");
   getObjectsManager()->startPublishing(mHistogramNHitsElec);
   mHistogramOccupancyElec = new TH2F("QcMuonChambers_Occupancy_Elec", "QcMuonChambers - Occupancy (MHz)",
-      MCH_FEEID_NUM*12*40, 0, MCH_FEEID_NUM*12*40, 64, 0, 64);
+                                     MCH_FEEID_NUM * 12 * 40, 0, MCH_FEEID_NUM * 12 * 40, 64, 0, 64);
   mHistogramOccupancyElec->SetOption("colz");
   getObjectsManager()->startPublishing(mHistogramOccupancyElec);
 
@@ -162,15 +162,14 @@ void PhysicsTaskDigits::monitorDataDigits(o2::framework::ProcessingContext& ctx)
     uint32_t orbitnumber = (orb & 0xFFFFFFFF);
     uint32_t link = (orb >> 32) & 0xFF;
     uint32_t fee = (orb >> 40) & 0xFF;
-    if(link != 15){
-      if(orbitnumber != lastorbitseen[fee][link]) {
+    if (link != 15) {
+      if (orbitnumber != lastorbitseen[fee][link]) {
         norbits[fee][link] += 1;
       }
       lastorbitseen[fee][link] = orbitnumber;
-    }
-    else if(link == 15){
-      for(int li=0; li<12; li++){
-        if(orbitnumber != lastorbitseen[fee][li]) {
+    } else if (link == 15) {
+      for (int li = 0; li < 12; li++) {
+        if (orbitnumber != lastorbitseen[fee][li]) {
           norbits[fee][li] += 1;
         }
         lastorbitseen[fee][li] = orbitnumber;
@@ -219,14 +218,14 @@ void PhysicsTaskDigits::plotDigit(const o2::mch::Digit& digit)
   int cathode = segment.isBendingPad(padid) ? 0 : 1;
   int dsid = segment.padDualSampaId(padid);
   int chan_addr = segment.padDualSampaChannel(padid);
-    
+
   uint32_t solar_id = 0;
   uint32_t ds_addr = 0;
   int32_t linkid = 0;
   int32_t fee_id = 0;
 
   // get the unique solar ID and the DS address associated to this digit
-  std::optional<DsElecId> dsElecId = mDet2ElecMapper(DsDetId{de, dsid});
+  std::optional<DsElecId> dsElecId = mDet2ElecMapper(DsDetId{ de, dsid });
   if (dsElecId.has_value()) {
     solar_id = dsElecId->solarId();
     ds_addr = dsElecId->elinkId();
@@ -241,8 +240,7 @@ void PhysicsTaskDigits::plotDigit(const o2::mch::Digit& digit)
   int xbin = fee_id * 12 * 40 + (linkid % 12) * 40 + ds_addr + 1;
   int ybin = chan_addr + 1;
 
-
-  mHistogramNHitsElec->Fill(xbin-0.5, ybin-0.5);
+  mHistogramNHitsElec->Fill(xbin - 0.5, ybin - 0.5);
 
   auto h = mHistogramADCamplitudeDE.find(de);
   if ((h != mHistogramADCamplitudeDE.end()) && (h->second != NULL)) {
@@ -283,21 +281,20 @@ void PhysicsTaskDigits::plotDigit(const o2::mch::Digit& digit)
         int nbpad = 0;
         uint32_t solar_id_boucle = 0;
 
-        if(segment.findPadPairByPosition(x, y, bpad, nbpad)){
+        if (segment.findPadPairByPosition(x, y, bpad, nbpad)) {
 
           // get the unique solar ID and the DS address associated to this bin
           int padid_boucle = (cathode == 0) ? bpad : nbpad;
-            int dsid_boucle = segment.padDualSampaId(padid_boucle);
-          std::optional<DsElecId> dsElecId = mDet2ElecMapper(DsDetId{de, dsid_boucle});
+          int dsid_boucle = segment.padDualSampaId(padid_boucle);
+          std::optional<DsElecId> dsElecId = mDet2ElecMapper(DsDetId{ de, dsid_boucle });
           if (dsElecId.has_value()) {
             solar_id_boucle = dsElecId->solarId();
           }
 
-          if(solar_id_boucle == solar_id){
+          if (solar_id_boucle == solar_id) {
             h2->second->SetBinContent(bx, by, norbits[fee_id][linkid]);
           }
         }
-
       }
     }
   }
@@ -324,8 +321,8 @@ void PhysicsTaskDigits::plotDigit(const o2::mch::Digit& digit)
 void PhysicsTaskDigits::endOfCycle()
 {
   QcInfoLogger::GetInstance() << "endOfCycle" << AliceO2::InfoLogger::InfoLogger::endm;
-  for(int de = 100; de <= 1030; de++) {
-    for(int i = 0; i < 2; i++) {
+  for (int de = 100; de <= 1030; de++) {
+    for (int i = 0; i < 2; i++) {
       auto ih = mHistogramOccupancyXY[i].find(de);
       ih = mHistogramOccupancyXY[i].find(de);
       if (ih == mHistogramOccupancyXY[i].end()) {
@@ -337,15 +334,15 @@ void PhysicsTaskDigits::endOfCycle()
   mHistogramOrbits[0]->set(mHistogramNorbitsDE[0], mHistogramNorbitsDE[1]);
   mHistogramOccupancy[0]->set(mHistogramNhitsDE[0], mHistogramNhitsDE[1]);
   mHistogramOccupancy[0]->Divide(mHistogramOrbits[0]);
-  mHistogramOccupancy[0]->Scale(1/87.5); // Converting Occupancy from NbHits/NbOrbits to MHz
-    
+  mHistogramOccupancy[0]->Scale(1 / 87.5); // Converting Occupancy from NbHits/NbOrbits to MHz
+
   // Fill norbits values for electronics channels associated to readout pads
-  for(uint16_t fee_id = 0; fee_id < MCH_FEEID_NUM; fee_id++) {
+  for (uint16_t fee_id = 0; fee_id < MCH_FEEID_NUM; fee_id++) {
 
     // loop on FEE links and check if it corresponds to an existing SOLAR board
-    for(uint8_t linkid = 0; linkid < 12; linkid++) {
+    for (uint8_t linkid = 0; linkid < 12; linkid++) {
 
-      std::optional<uint16_t> solar_id = mFeeLink2SolarMapper(FeeLinkId{fee_id, linkid});
+      std::optional<uint16_t> solar_id = mFeeLink2SolarMapper(FeeLinkId{ fee_id, linkid });
       if (!solar_id.has_value()) {
         continue;
       }
@@ -354,7 +351,7 @@ void PhysicsTaskDigits::endOfCycle()
       for (uint8_t ds_addr = 0; ds_addr < 40; ds_addr++) {
         uint32_t de, dsid;
         std::optional<DsDetId> dsDetId =
-            mElec2DetMapper(DsElecId{solar_id.value(), static_cast<uint8_t>(ds_addr/5), static_cast<uint8_t>(ds_addr%5)});
+          mElec2DetMapper(DsElecId{ solar_id.value(), static_cast<uint8_t>(ds_addr / 5), static_cast<uint8_t>(ds_addr % 5) });
         if (!dsDetId.has_value()) {
           continue;
         }
@@ -364,11 +361,11 @@ void PhysicsTaskDigits::endOfCycle()
         int xbin = fee_id * 12 * 40 + (linkid % 12) * 40 + ds_addr + 1;
 
         // loop on DS channels and check if it is associated to a readout pad
-        for(int chan_addr = 0; chan_addr < 64; chan_addr++) {
+        for (int chan_addr = 0; chan_addr < 64; chan_addr++) {
 
           const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(de);
           int padid = segment.findPadByFEE(dsid, chan_addr);
-          if(padid < 0) {
+          if (padid < 0) {
             continue;
           }
 
@@ -379,11 +376,10 @@ void PhysicsTaskDigits::endOfCycle()
     }
   }
 
-
   mHistogramOccupancyElec->Reset();
   mHistogramOccupancyElec->Add(mHistogramNHitsElec);
   mHistogramOccupancyElec->Divide(mHistogramNorbitsElec);
-  mHistogramOccupancyElec->Scale(1/87.5); // Converting Occupancy from NbHits/NbOrbits to MHz
+  mHistogramOccupancyElec->Scale(1 / 87.5); // Converting Occupancy from NbHits/NbOrbits to MHz
 
 #ifdef QC_MCH_SAVE_TEMP_ROOTFILE
   TFile f("/tmp/qc.root", "RECREATE");
@@ -391,41 +387,41 @@ void PhysicsTaskDigits::endOfCycle()
   mHistogramNorbitsElec->Write();
   mHistogramNHitsElec->Write();
   mHistogramOccupancyElec->Write();
-    
-        for (int de=0; de<1100; de++) {
-        {
-          auto h = mHistogramADCamplitudeDE.find(de);
-          if ((h != mHistogramADCamplitudeDE.end()) && (h->second != NULL)) {
+
+  for (int de = 0; de < 1100; de++) {
+    {
+      auto h = mHistogramADCamplitudeDE.find(de);
+      if ((h != mHistogramADCamplitudeDE.end()) && (h->second != NULL)) {
+        h->second->Write();
+      }
+    }
+    for (int i = 0; i < 2; i++) {
+      {
+        auto h = mHistogramNhitsDE[i].find(de);
+        if ((h != mHistogramNhitsDE[i].end()) && (h->second != NULL)) {
+          h->second->Write();
+        }
+      }
+      {
+        auto h = mHistogramNorbitsDE[i].find(de);
+        if ((h != mHistogramNorbitsDE[i].end()) && (h->second != NULL)) {
+          h->second->Write();
+        }
+      }
+      {
+        auto h = mHistogramOccupancyXY[i].find(de);
+        if ((h != mHistogramOccupancyXY[i].end()) && (h->second != NULL)) {
+          auto hhits = mHistogramNhitsDE[i].find(de);
+          auto horbits = mHistogramNorbitsDE[i].find(de);
+          if ((hhits != mHistogramNhitsDE[i].end()) && (horbits != mHistogramNorbitsDE[i].end()) && (hhits->second != NULL) && (horbits->second != NULL)) {
+            h->second->Divide(hhits->second, horbits->second);
+            h->second->Scale(1 / 87.5); // Converting Occupancy from NbHits/NbOrbits to MHz
             h->second->Write();
           }
         }
-        for(int i = 0; i < 2; i++) {
-          {
-            auto h = mHistogramNhitsDE[i].find(de);
-            if ((h != mHistogramNhitsDE[i].end()) && (h->second != NULL)) {
-              h->second->Write();
-            }
-          }
-          {
-            auto h = mHistogramNorbitsDE[i].find(de);
-            if ((h != mHistogramNorbitsDE[i].end()) && (h->second != NULL)) {
-              h->second->Write();
-            }
-          }
-          {
-            auto h = mHistogramOccupancyXY[i].find(de);
-            if ((h != mHistogramOccupancyXY[i].end()) && (h->second != NULL)) {
-              auto hhits = mHistogramNhitsDE[i].find(de);
-              auto horbits = mHistogramNorbitsDE[i].find(de);
-              if ((hhits != mHistogramNhitsDE[i].end()) && (horbits != mHistogramNorbitsDE[i].end()) && (hhits->second != NULL) && (horbits->second != NULL)) {
-                h->second->Divide(hhits->second,horbits->second);
-                h->second->Scale(1/87.5); // Converting Occupancy from NbHits/NbOrbits to MHz
-                h->second->Write();
-              }
-            }
-          }
-        }
       }
+    }
+  }
 
   {
     // Using OccupancyElec to get the mean occupancy per DE
@@ -433,49 +429,49 @@ void PhysicsTaskDigits::endOfCycle()
     auto horbits = mHistogramNorbitsElec;
     auto h1 = mMeanOccupancyPerDE;
     if (h && h1 && horbits) {
-      for(int de = 0; de < 1100; de++) {
+      for (int de = 0; de < 1100; de++) {
         MeanOccupancyDE[de] = 0;
         NbinsDE[de] = 0;
       }
-      for(int binx=1; binx<h->GetXaxis()->GetNbins()+1; binx++){
-        for(int biny=1; biny<h->GetYaxis()->GetNbins()+1; biny++){
+      for (int binx = 1; binx < h->GetXaxis()->GetNbins() + 1; binx++) {
+        for (int biny = 1; biny < h->GetYaxis()->GetNbins() + 1; biny++) {
 
           int norbits = horbits->GetBinContent(binx, biny);
-          if(norbits <= 0) {
+          if (norbits <= 0) {
             // no orbits detected for this channel, skip it
             continue;
           }
 
-          uint32_t ds_addr =  (binx-1) % 40;
-          uint32_t linkid = ( (binx-1-ds_addr) / 40 ) % 12;
-          uint32_t fee_id = (binx-1-ds_addr-40*linkid) / (12*40);
-          uint32_t chan_addr = biny-1;
+          uint32_t ds_addr = (binx - 1) % 40;
+          uint32_t linkid = ((binx - 1 - ds_addr) / 40) % 12;
+          uint32_t fee_id = (binx - 1 - ds_addr - 40 * linkid) / (12 * 40);
+          uint32_t chan_addr = biny - 1;
           uint32_t de;
           uint32_t dsid;
           uint32_t cru_id = fee_id / 2;
           uint32_t crulinkid = linkid + 12 * (fee_id % 2);
-          std::optional<uint16_t> solar_id = mFeeLink2SolarMapper(FeeLinkId{static_cast<uint16_t>(fee_id), static_cast<uint8_t>(linkid)});
-            if (!solar_id.has_value()) {
-              continue;
-            }
-            std::optional<DsDetId> dsDetId =
-                mElec2DetMapper(DsElecId{solar_id.value(), static_cast<uint8_t>(ds_addr/5), static_cast<uint8_t>(ds_addr%5)});
-            if (!dsDetId.has_value()) {
-              continue;
-            }
-            de = dsDetId->deId();
-            dsid = dsDetId->dsId();
-            
-              MeanOccupancyDE[de] += h->GetBinContent(binx, biny);
-              NbinsDE[de] += 1;
+          std::optional<uint16_t> solar_id = mFeeLink2SolarMapper(FeeLinkId{ static_cast<uint16_t>(fee_id), static_cast<uint8_t>(linkid) });
+          if (!solar_id.has_value()) {
+            continue;
+          }
+          std::optional<DsDetId> dsDetId =
+            mElec2DetMapper(DsElecId{ solar_id.value(), static_cast<uint8_t>(ds_addr / 5), static_cast<uint8_t>(ds_addr % 5) });
+          if (!dsDetId.has_value()) {
+            continue;
+          }
+          de = dsDetId->deId();
+          dsid = dsDetId->dsId();
+
+          MeanOccupancyDE[de] += h->GetBinContent(binx, biny);
+          NbinsDE[de] += 1;
         }
       }
-        
-      for(int i=0; i<1100; i++){
-        if(NbinsDE[i]>0){
+
+      for (int i = 0; i < 1100; i++) {
+        if (NbinsDE[i] > 0) {
           MeanOccupancyDE[i] /= NbinsDE[i];
         }
-        h1->SetBinContent(i+1, MeanOccupancyDE[i]);
+        h1->SetBinContent(i + 1, MeanOccupancyDE[i]);
       }
       h1->Write();
     }
@@ -487,47 +483,47 @@ void PhysicsTaskDigits::endOfCycle()
     auto horbits = mHistogramNorbitsElec;
     auto h1 = mMeanOccupancyPerDECycle;
     if (hhits && horbits && h1) {
-      for(int de = 0; de < 1100; de++) {
+      for (int de = 0; de < 1100; de++) {
         NewMeanNhitsDE[de] = 0;
         NewMeanNorbitsDE[de] = 0;
       }
-      for(int binx=1; binx<hhits->GetXaxis()->GetNbins()+1; binx++){
-        for(int biny=1; biny<hhits->GetYaxis()->GetNbins()+1; biny++){
-          uint32_t ds_addr =  (binx-1) % 40;
-          uint32_t linkid = ( (binx-1-ds_addr) / 40 ) % 12;
-          uint32_t fee_id = (binx-1-ds_addr-40*linkid) / (12*40);
-          uint32_t chan_addr = biny-1;
+      for (int binx = 1; binx < hhits->GetXaxis()->GetNbins() + 1; binx++) {
+        for (int biny = 1; biny < hhits->GetYaxis()->GetNbins() + 1; biny++) {
+          uint32_t ds_addr = (binx - 1) % 40;
+          uint32_t linkid = ((binx - 1 - ds_addr) / 40) % 12;
+          uint32_t fee_id = (binx - 1 - ds_addr - 40 * linkid) / (12 * 40);
+          uint32_t chan_addr = biny - 1;
           uint32_t de;
           uint32_t dsid;
           uint32_t cru_id = fee_id / 2;
           uint32_t crulinkid = linkid + 12 * (fee_id % 2);
-          std::optional<uint16_t> solar_id = mFeeLink2SolarMapper(FeeLinkId{static_cast<uint16_t>(fee_id), static_cast<uint8_t>(linkid)});
-            if (!solar_id.has_value()) {
-              continue;
-            }
-            std::optional<DsDetId> dsDetId =
-                mElec2DetMapper(DsElecId{solar_id.value(), static_cast<uint8_t>(ds_addr/5), static_cast<uint8_t>(ds_addr%5)});
-            if (!dsDetId.has_value()) {
-              continue;
-            }
-            de = dsDetId->deId();
-            dsid = dsDetId->dsId();
-            
-              NewMeanNhitsDE[de] += hhits->GetBinContent(binx, biny);
-              NewMeanNorbitsDE[de] += horbits->GetBinContent(binx, biny);
-              NbinsDE[de] += 1;
+          std::optional<uint16_t> solar_id = mFeeLink2SolarMapper(FeeLinkId{ static_cast<uint16_t>(fee_id), static_cast<uint8_t>(linkid) });
+          if (!solar_id.has_value()) {
+            continue;
+          }
+          std::optional<DsDetId> dsDetId =
+            mElec2DetMapper(DsElecId{ solar_id.value(), static_cast<uint8_t>(ds_addr / 5), static_cast<uint8_t>(ds_addr % 5) });
+          if (!dsDetId.has_value()) {
+            continue;
+          }
+          de = dsDetId->deId();
+          dsid = dsDetId->dsId();
+
+          NewMeanNhitsDE[de] += hhits->GetBinContent(binx, biny);
+          NewMeanNorbitsDE[de] += horbits->GetBinContent(binx, biny);
+          NbinsDE[de] += 1;
+        }
       }
-      }
-      for(int i=0; i<1100; i++){
+      for (int i = 0; i < 1100; i++) {
         MeanOccupancyDECycle[i] = 0;
-        if(NbinsDE[i]>0){
+        if (NbinsDE[i] > 0) {
           NewMeanNhitsDE[i] /= NbinsDE[i];
           NewMeanNorbitsDE[i] /= NbinsDE[i];
         }
-        if((NewMeanNorbitsDE[i]-LastMeanNorbitsDE[i]) > 0){
-          MeanOccupancyDECycle[i] = (NewMeanNhitsDE[i]-LastMeanNhitsDE[i])/(NewMeanNorbitsDE[i]-LastMeanNorbitsDE[i])/87.5; //Scaling to MHz
+        if ((NewMeanNorbitsDE[i] - LastMeanNorbitsDE[i]) > 0) {
+          MeanOccupancyDECycle[i] = (NewMeanNhitsDE[i] - LastMeanNhitsDE[i]) / (NewMeanNorbitsDE[i] - LastMeanNorbitsDE[i]) / 87.5; //Scaling to MHz
         }
-        h1->SetBinContent(i+1, MeanOccupancyDECycle[i]);
+        h1->SetBinContent(i + 1, MeanOccupancyDECycle[i]);
         LastMeanNhitsDE[i] = NewMeanNhitsDE[i];
         LastMeanNorbitsDE[i] = NewMeanNorbitsDE[i];
       }
@@ -541,7 +537,6 @@ void PhysicsTaskDigits::endOfCycle()
   f.Close();
 #endif
 }
-
 
 void PhysicsTaskDigits::endOfActivity(Activity& /*activity*/)
 {

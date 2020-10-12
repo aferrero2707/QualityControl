@@ -64,8 +64,6 @@ namespace muonchambers
 
 using RDH = o2::header::RDHAny;
 
-
-
 bool BXCNT_compare(long int c1, long int c2)
 {
   return true;
@@ -509,8 +507,8 @@ decode_state_t Add1BitOfData(uint32_t gbtdata, DualSampa& dsr, DualSampaGroup* d
         if (hamming_error) {
           gNbErrors++;
           fprintf(flog, "SAMPA [%d %d %2d (J%d DS%d)]: Hamming ERROR -> Correctable: %s\n",
-              ds->hit.cru_id, ds->hit.link_id, ds->id, (int)(ds->id/5 + 1), (int)(ds->id%5),
-              hamming_uncorr ? "NO" : "YES");
+                  ds->hit.cru_id, ds->hit.link_id, ds->id, (int)(ds->id / 5 + 1), (int)(ds->id % 5),
+                  hamming_uncorr ? "NO" : "YES");
           ds->status = notSynchronized;
           result = DECODE_STATE_UNKNOWN;
         } else {                          // No Hamming error
@@ -1001,8 +999,8 @@ void Decoder::decodeRaw(uint32_t* payload_buf, size_t nGBTwords, int cru_id, int
             hit.samples.clear();
             hit.csum = 0;
             hit.time = 0;
-            for(int ci = 0; ci < 2; ci++) {
-              for(int cj = 0; cj < 32; cj++) {
+            for (int ci = 0; ci < 2; ci++) {
+              for (int cj = 0; cj < 32; cj++) {
                 ds[cru_id][link_id][i].min[ci][cj] = 0xFFFFFFFF;
                 ds[cru_id][link_id][i].max[ci][cj] = 0;
               }
@@ -1024,15 +1022,15 @@ void Decoder::decodeRaw(uint32_t* payload_buf, size_t nGBTwords, int cru_id, int
 
             int chipid = hit.ds_addr % 2;
             int chid = hit.chan_addr;
-            if( ds[cru_id][link_id][i].min[chipid][chid] > ds[cru_id][link_id][i].sample )
+            if (ds[cru_id][link_id][i].min[chipid][chid] > ds[cru_id][link_id][i].sample)
               ds[cru_id][link_id][i].min[chipid][chid] = ds[cru_id][link_id][i].sample;
-            if( ds[cru_id][link_id][i].max[chipid][chid] < ds[cru_id][link_id][i].sample )
+            if (ds[cru_id][link_id][i].max[chipid][chid] < ds[cru_id][link_id][i].sample)
               ds[cru_id][link_id][i].max[chipid][chid] = ds[cru_id][link_id][i].sample;
 
             if (state == DECODE_STATE_END_OF_CLUSTER) {
               int32_t deltaNew = ds[cru_id][link_id][i].max[chipid][chid] - ds[cru_id][link_id][i].min[chipid][chid];
               //if( hit.deltaMax < deltaNew )
-                hit.delta = deltaNew;
+              hit.delta = deltaNew;
               mHits.push_back(hit);
               if (hit.link_id >= 24) {
                 fprintf(stdout, "hit: link_id=%d, ds_addr=%d, chan_addr=%d\n",
@@ -1171,10 +1169,11 @@ void Decoder::processData(const char* buf, size_t size)
   int RDH_BLOCK_SIZE = 8192;
 
   int manu2ds[64] = {
-      63, 62, 61, 60, 59, 57, 56, 53, 51, 50, 47, 45, 44, 41, 38, 35,
-      36, 33, 34, 37, 32, 39, 40, 42, 43, 46, 48, 49, 52, 54, 55, 58,
-      7, 8, 5, 2, 6, 1, 3, 0, 4, 9, 10, 15, 17, 18, 22, 25,
-      31, 30, 29, 28, 27, 26, 24, 23, 20, 21, 16, 19, 12, 14, 11, 13};
+    63, 62, 61, 60, 59, 57, 56, 53, 51, 50, 47, 45, 44, 41, 38, 35,
+    36, 33, 34, 37, 32, 39, 40, 42, 43, 46, 48, 49, 52, 54, 55, 58,
+    7, 8, 5, 2, 6, 1, 3, 0, 4, 9, 10, 15, 17, 18, 22, 25,
+    31, 30, 29, 28, 27, 26, 24, 23, 20, 21, 16, 19, 12, 14, 11, 13
+  };
 
   int ds2manu[64];
   for (int i = 0; i < 64; i++) {
@@ -1265,7 +1264,7 @@ void Decoder::processData(const char* buf, size_t size)
       int lid_max = (rdhLinkId == 15) ? 11 + dpwId * 12 : 23;
       if (gPrintLevel >= 1)
         fprintf(flog, "Resetting decoding FSM: orbit=%d, previous=%d, links=%d-%d\n",
-            rdhOrbit, hb_orbit, lid_min, lid_max);
+                rdhOrbit, hb_orbit, lid_min, lid_max);
       for (int l = lid_min; l <= lid_max; l++) {
         for (int i = 0; i < 40; i++) {
           DualSampaReset(&(ds[cruId][l][i]));
@@ -1310,7 +1309,6 @@ void Decoder::processData(const char* buf, size_t size)
         continue;
 
       mDigits.emplace_back(o2::mch::Digit(hit.pad.fDE, hit.pad.fAddress, hit.csum, o2::mch::Digit::Time{}));
-
     }
     if (gPrintLevel >= 1)
       fprintf(flog, "Finished processing hits\n");

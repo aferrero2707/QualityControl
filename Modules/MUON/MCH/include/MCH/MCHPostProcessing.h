@@ -29,7 +29,6 @@ namespace o2::quality_control::repository
 class DatabaseInterface;
 }
 
-
 namespace o2::quality_control_modules::muonchambers
 {
 /// \brief  A post-processing task which trends values, stores them in a TTree and produces plots.
@@ -67,7 +66,6 @@ class MCHPostProcessing : public quality_control::postprocessing::PostProcessing
   std::unordered_map<std::string, std::unique_ptr<quality_control::postprocessing::Reductor>> mReductors;
 };
 
-}
+} // namespace o2::quality_control_modules::muonchambers
 
 #endif //QUALITYCONTROL_MCHPOSTPROCESSING_H
-

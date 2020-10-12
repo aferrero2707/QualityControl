@@ -180,8 +180,10 @@ bool MapFEC::readDSMapping(std::string mapFile)
       mDsMap[link_id][ds_addr].mIndex = ds_id[i];
       mDsMap[link_id][ds_addr].mBad = 0;
 
-      if (de < 0 || de > MCH_DE_MAX) continue;
-      if (ds_id[i] < 0 || ds_id[i] > MCH_DSID_MAX) continue;
+      if (de < 0 || de > MCH_DE_MAX)
+        continue;
+      if (ds_id[i] < 0 || ds_id[i] > MCH_DSID_MAX)
+        continue;
       mDsMapInv[de][ds_id[i]].mLink = link_id;
       mDsMapInv[de][ds_id[i]].mAddress = ds_addr;
     }

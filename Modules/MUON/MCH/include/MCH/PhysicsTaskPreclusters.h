@@ -18,8 +18,7 @@
 class TH1F;
 class TH2F;
 
-
-#define MCH_FFEID_MAX (31*2 +1)
+#define MCH_FFEID_MAX (31 * 2 + 1)
 
 using namespace o2::quality_control::core;
 
@@ -55,23 +54,21 @@ class PhysicsTaskPreclusters /*final*/ : public TaskInterface // todo add back t
   void printPreclusters(gsl::span<const o2::mch::PreCluster> preClusters, gsl::span<const o2::mch::Digit> digits);
 
  private:
-    
-    double MeanPseudoeffDE[1100];
-    double MeanPseudoeffDECycle[1100];
-    double LastPreclBNBDE[1100];
-    double NewPreclBNBDE[1100];
-    double LastPreclNumDE[1100];
-    double NewPreclNumDE[1100];
+  double MeanPseudoeffDE[1100];
+  double MeanPseudoeffDECycle[1100];
+  double LastPreclBNBDE[1100];
+  double NewPreclBNBDE[1100];
+  double LastPreclNumDE[1100];
+  double NewPreclNumDE[1100];
 
   std::vector<std::unique_ptr<mch::Digit>> digits;
-    
-    // TH1 de la pseudoeff moyenne par DE (intégré ou sur le cycle écoulé)
-    TH1F* mMeanPseudoeffPerDE;
-    TH1F* mMeanPseudoeffPerDECycle;
 
-    
-//  std::map<int, TH2F*> mHistogramMeanNhitsPerDE;
-//  std::map<int, TH2F*> mHistogramMeanNorbitsPerDE;
+  // TH1 de la pseudoeff moyenne par DE (intégré ou sur le cycle écoulé)
+  TH1F* mMeanPseudoeffPerDE;
+  TH1F* mMeanPseudoeffPerDECycle;
+
+  //  std::map<int, TH2F*> mHistogramMeanNhitsPerDE;
+  //  std::map<int, TH2F*> mHistogramMeanNorbitsPerDE;
 
   std::map<int, TH1F*> mHistogramClchgDE;
   std::map<int, TH1F*> mHistogramClchgDEOnCycle;
@@ -81,7 +78,6 @@ class PhysicsTaskPreclusters /*final*/ : public TaskInterface // todo add back t
   std::map<int, TH2F*> mHistogramPseudoeffXY[3];
 
   GlobalHistogram* mHistogramPseudoeff[3];
-    
 };
 
 } // namespace muonchambers
@@ -89,4 +85,3 @@ class PhysicsTaskPreclusters /*final*/ : public TaskInterface // todo add back t
 } // namespace o2
 
 #endif // QC_MODULE_MUONCHAMBERS_PHYSICSDATAPROCESSOR_H
-

@@ -32,7 +32,7 @@ namespace muonchambers
 /// \author Sebastien Perrin
 class PhysicsTaskDigits /*final*/ : public TaskInterface // todo add back the "final" when doxygen is fixed
 {
-public:
+ public:
   /// \brief Constructor
   PhysicsTaskDigits();
   /// Destructor
@@ -48,7 +48,7 @@ public:
   void endOfActivity(Activity& activity) override;
   void reset() override;
 
-private:
+ private:
   void plotDigit(const o2::mch::Digit& digit);
 
   o2::mch::raw::Elec2DetMapper mElec2DetMapper;

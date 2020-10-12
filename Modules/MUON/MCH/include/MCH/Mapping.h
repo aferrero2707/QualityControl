@@ -37,7 +37,7 @@ class MapSolar
 class MapSolarInv
 {
  public:
-  int mCruId; // CRU ID
+  int mCruId;   // CRU ID
   int mCruLink; // CRU link
 
   MapSolarInv();

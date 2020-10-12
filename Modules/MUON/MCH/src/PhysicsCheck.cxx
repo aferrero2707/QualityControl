@@ -24,10 +24,9 @@
 #include <TList.h>
 #include <TMath.h>
 #include <TPaveText.h>
-#include <iostream> 
+#include <iostream>
 #include <fstream>
 #include <string>
-
 
 using namespace std;
 
@@ -36,26 +35,26 @@ namespace o2::quality_control_modules::muonchambers
 
 PhysicsCheck::PhysicsCheck()
 {
-    mPrintLevel = 0;
-    minOccupancy = 0.05;
-    maxOccupancy = 1.00;
+  mPrintLevel = 0;
+  minOccupancy = 0.05;
+  maxOccupancy = 1.00;
 }
 
 PhysicsCheck::~PhysicsCheck() {}
 
 void PhysicsCheck::configure(std::string)
 {
-//   if (AliRecoParam::ConvertIndex(specie) == AliRecoParam::kCosmic) {
-//     minTOFrawTime = 150.; //ns
-//     maxTOFrawTime = 250.; //ns
-//   }
+  //   if (AliRecoParam::ConvertIndex(specie) == AliRecoParam::kCosmic) {
+  //     minTOFrawTime = 150.; //ns
+  //     maxTOFrawTime = 250.; //ns
+  //   }
 }
 
 Quality PhysicsCheck::check(std::map<std::string, std::shared_ptr<MonitorObject>>* moMap)
 {
-  std::cout<<"================================="<<std::endl;
-  std::cout<<"PhysicsCheck::check() called"<<std::endl;
-  std::cout<<"================================="<<std::endl;
+  std::cout << "=================================" << std::endl;
+  std::cout << "PhysicsCheck::check() called" << std::endl;
+  std::cout << "=================================" << std::endl;
   Quality result = Quality::Null;
 
   for (auto& [moName, mo] : *moMap) {
@@ -75,26 +74,25 @@ Quality PhysicsCheck::check(std::map<std::string, std::shared_ptr<MonitorObject>
         for (int i = 1; i <= nbinsx; i++) {
           for (int j = 1; j <= nbinsy; j++) {
             Float_t occ = h->GetBinContent(i, j);
-              if (occ < minOccupancy || occ >= maxOccupancy){
+            if (occ < minOccupancy || occ >= maxOccupancy) {
               nbad += 1;
-              int ds_addr =  (i%40)-1;
-              int link_id = ( (i-1-ds_addr) / 40 ) % 12;
-              int fee_id = (i-1-ds_addr-40*link_id) / (12*40);
-              int chan_addr = j-1;
-                  
-                  if(mPrintLevel >= 1){
-                      std::cout << "Channel with unusual occupancy read from OccupancyElec histogrm: fee_id = "<< fee_id << ", link_id = "<< link_id << ", ds_addr = "<< ds_addr << " , chan_addr = " << chan_addr <<" with an occupancy of " << occ << std::endl;
-                  }
+              int ds_addr = (i % 40) - 1;
+              int link_id = ((i - 1 - ds_addr) / 40) % 12;
+              int fee_id = (i - 1 - ds_addr - 40 * link_id) / (12 * 40);
+              int chan_addr = j - 1;
+
+              if (mPrintLevel >= 1) {
+                std::cout << "Channel with unusual occupancy read from OccupancyElec histogrm: fee_id = " << fee_id << ", link_id = " << link_id << ", ds_addr = " << ds_addr << " , chan_addr = " << chan_addr << " with an occupancy of " << occ << std::endl;
               }
+            }
           }
         }
         if (nbad < 1)
-            result = Quality::Good;
+          result = Quality::Good;
         else
           result = Quality::Bad;
       }
     }
-      
   }
   return result;
 }
@@ -140,4 +138,3 @@ void PhysicsCheck::beautify(std::shared_ptr<MonitorObject> mo, Quality checkResu
 }
 
 } // namespace o2::quality_control_modules::muonchambers
-

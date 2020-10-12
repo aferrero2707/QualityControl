@@ -41,15 +41,13 @@ class PhysicsCheck : public o2::quality_control::checker::CheckInterface
   void beautify(std::shared_ptr<MonitorObject> mo, Quality checkResult = Quality::Null) override;
   std::string getAcceptedType() override;
 
-
  private:
-    int mPrintLevel;
-    double minOccupancy;
-    double maxOccupancy;
+  int mPrintLevel;
+  double minOccupancy;
+  double maxOccupancy;
   ClassDefOverride(PhysicsCheck, 1);
 };
 
 } // namespace o2::quality_control_modules::muonchambers
 
 #endif // QC_MODULE_TOF_TOFCHECKRAWSTIME_H
-
