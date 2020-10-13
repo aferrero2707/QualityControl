@@ -138,7 +138,6 @@ int32_t MapCRU::getLink(int32_t c, int32_t l)
 
 bool MapCRU::getLinkInv(uint32_t link_id, int32_t& c, int32_t& l)
 {
-  int32_t result = -1;
   if (link_id > LINKID_MAX)
     return false;
   if (mSolarMapInv[link_id].mCruId < 0 || mSolarMapInv[link_id].mCruLink < 0)

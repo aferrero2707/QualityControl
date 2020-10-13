@@ -50,7 +50,7 @@ struct DualSampa {
   int nsyn2Bits;                   // Nb of words waiting synchronization
   Sampa::SampaHeaderStruct header; // current channel header
   unsigned long bxc[2];
-  uint32_t csize, ctime, cid, sample;
+  int32_t csize, ctime, cid, sample;
   int chan_addr[2];
   uint64_t packetsize;
   int nbHit;         // incremented each time a header packet is received for this card

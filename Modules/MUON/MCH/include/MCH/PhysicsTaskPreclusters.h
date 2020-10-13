@@ -10,17 +10,11 @@
 
 #include <vector>
 
+#include <TH2.h>
 #include "QualityControl/TaskInterface.h"
 #include "MCH/GlobalHistogram.h"
 #include "MCHBase/Digit.h"
 #include "MCHBase/PreCluster.h"
-
-class TH1F;
-class TH2F;
-
-#define MCH_FFEID_MAX (31 * 2 + 1)
-
-using namespace o2::quality_control::core;
 
 namespace o2
 {
@@ -32,7 +26,7 @@ namespace muonchambers
 /// \brief Quality Control Task for the analysis of MCH physics data
 /// \author Andrea Ferrero
 /// \author Sebastien Perrin
-class PhysicsTaskPreclusters /*final*/ : public TaskInterface // todo add back the "final" when doxygen is fixed
+class PhysicsTaskPreclusters /*final*/ : public o2::quality_control::core::TaskInterface // todo add back the "final" when doxygen is fixed
 {
  public:
   /// \brief Constructor
@@ -42,12 +36,11 @@ class PhysicsTaskPreclusters /*final*/ : public TaskInterface // todo add back t
 
   // Definition of the methods for the template method pattern
   void initialize(o2::framework::InitContext& ctx) override;
-  void startOfActivity(Activity& activity) override;
+  void startOfActivity(o2::quality_control::core::Activity& activity) override;
   void startOfCycle() override;
-  void monitorDataPreclusters(o2::framework::ProcessingContext& ctx);
   void monitorData(o2::framework::ProcessingContext& ctx) override;
   void endOfCycle() override;
-  void endOfActivity(Activity& activity) override;
+  void endOfActivity(o2::quality_control::core::Activity& activity) override;
   void reset() override;
 
   bool plotPrecluster(const o2::mch::PreCluster& preCluster, gsl::span<const o2::mch::Digit> digits);
@@ -66,9 +59,6 @@ class PhysicsTaskPreclusters /*final*/ : public TaskInterface // todo add back t
   // TH1 de la pseudoeff moyenne par DE (intégré ou sur le cycle écoulé)
   TH1F* mMeanPseudoeffPerDE;
   TH1F* mMeanPseudoeffPerDECycle;
-
-  //  std::map<int, TH2F*> mHistogramMeanNhitsPerDE;
-  //  std::map<int, TH2F*> mHistogramMeanNorbitsPerDE;
 
   std::map<int, TH1F*> mHistogramClchgDE;
   std::map<int, TH1F*> mHistogramClchgDEOnCycle;

@@ -18,6 +18,7 @@
 #include <iostream>
 #include <string>
 #include <regex>
+#include <gsl/gsl>
 
 namespace o2::quality_control_modules::muonchambers
 {
@@ -29,140 +30,48 @@ void* TH1MCHReductor::getBranchAddress()
 
 const char* TH1MCHReductor::getBranchLeafList()
 {
-  return "occ500/D:occ501:occ502:occ503:occ504:occ505:occ506:occ507:occ508:occ509:occ510:occ511:occ512:occ513:occ514:occ515:occ516:occ517:occ600:occ601:occ602:occ603:occ604:occ605:occ606:occ607:occ608:occ609:occ610:occ611:occ612:occ613:occ614:occ615:occ616:occ617:occ700:occ701:occ702:occ703:occ704:occ705:occ706:occ707:occ708:occ709:occ710:occ711:occ712:occ713:occ714:occ715:occ716:occ717:occ718:occ719:occ720:occ721:occ722:occ723:occ724:occ725:occ800:occ801:occ802:occ803:occ804:occ805:occ806:occ807:occ808:occ809:occ810:occ811:occ812:occ813:occ814:occ815:occ816:occ817:occ818:occ819:occ820:occ821:occ822:occ823:occ824:occ825:occ900:occ901:occ902:occ903:occ904:occ905:occ906:occ907:occ908:occ909:occ910:occ911:occ912:occ913:occ914:occ915:occ916:occ917:occ918:occ919:occ920:occ921:occ922:occ923:occ924:occ925:occ1000:occ1001:occ1002:occ1003:occ1004:occ1005:occ1006:occ1007:occ1008:occ1009:occ1010:occ1011:occ1012:occ1013:occ1014:occ1015:occ1016:occ1017:occ1018:occ1019:occ1020:occ1021:occ1022:occ1023:occ1024:occ1025:occ5I:occ5O:occ6I:occ6O:occ7I:occ7O:occ8I:occ8O:occ9I:occ9O:occ10I:occ10O:entries";
+  return "val500/D:val501:val502:val503:val504:val505:val506:val507:val508:val509:val510:val511:val512:val513:val514:val515:val516:val517:val600:val601:val602:val603:val604:val605:val606:val607:val608:val609:val610:val611:val612:val613:val614:val615:val616:val617:val700:val701:val702:val703:val704:val705:val706:val707:val708:val709:val710:val711:val712:val713:val714:val715:val716:val717:val718:val719:val720:val721:val722:val723:val724:val725:val800:val801:val802:val803:val804:val805:val806:val807:val808:val809:val810:val811:val812:val813:val814:val815:val816:val817:val818:val819:val820:val821:val822:val823:val824:val825:val900:val901:val902:val903:val904:val905:val906:val907:val908:val909:val910:val911:val912:val913:val914:val915:val916:val917:val918:val919:val920:val921:val922:val923:val924:val925:val1000:val1001:val1002:val1003:val1004:val1005:val1006:val1007:val1008:val1009:val1010:val1011:val1012:val1013:val1014:val1015:val1016:val1017:val1018:val1019:val1020:val1021:val1022:val1023:val1024:val1025:val5I:val5O:val6I:val6O:val7I:val7O:val8I:val8O:val9I:val9O:val10I:val10O:entries";
 }
 
 void TH1MCHReductor::update(TObject* obj)
 {
   auto histo = dynamic_cast<TH1*>(obj);
-  if (histo) {
-    double mean = 0;
-    mStats.entries = histo->GetEntries();
-    for (int i = 0; i <= 17; i++) {
-      mStats.indiv_occs.indiv[i] = histo->GetBinContent(500 + i + 1);
-    }
-    for (int i = 18; i <= 35; i++) {
-      mStats.indiv_occs.indiv[i] = histo->GetBinContent(600 + (i - 18) + 1);
-    }
-    for (int i = 36; i <= 61; i++) {
-      mStats.indiv_occs.indiv[i] = histo->GetBinContent(700 + (i - 36) + 1);
-    }
-    for (int i = 62; i <= 87; i++) {
-      mStats.indiv_occs.indiv[i] = histo->GetBinContent(800 + (i - 62) + 1);
-    }
-    for (int i = 88; i <= 113; i++) {
-      mStats.indiv_occs.indiv[i] = histo->GetBinContent(900 + (i - 88) + 1);
-    }
-    for (int i = 114; i <= 139; i++) {
-      mStats.indiv_occs.indiv[i] = histo->GetBinContent(1000 + (i - 114) + 1);
-    }
+  if (!histo)  return;
 
-    //5I
-    for (int i : detCH5I) {
-      mean += histo->GetBinContent(i + 1);
+  mStats.entries = histo->GetEntries();
+
+  int ivec[7] = {0, 18, 36, 62, 88, 114, 140};
+  int deMin = 500;
+  for(int k = 0; k < 6; k++) {
+    for (int i = ivec[k]; i < ivec[k+1]; i++) {
+      mStats.de_values.values[i] = histo->GetBinContent(deMin + (i - ivec[k]) + 1);
     }
-    mean /= 9;
-    mStats.halfch_occs.halfch[0] = mean;
-    mean = 0;
-
-    //5O
-    for (int i : detCH5O) {
-      mean += histo->GetBinContent(i + 1);
-    }
-    mean /= 9;
-    mStats.halfch_occs.halfch[1] = mean;
-    mean = 0;
-
-    //6I
-    for (int i : detCH6I) {
-      mean += histo->GetBinContent(i + 1);
-    }
-    mean /= 9;
-    mStats.halfch_occs.halfch[2] = mean;
-    mean = 0;
-
-    //6O
-    for (int i : detCH6O) {
-      mean += histo->GetBinContent(i + 1);
-    }
-    mean /= 9;
-    mStats.halfch_occs.halfch[3] = mean;
-    mean = 0;
-
-    //7I
-    for (int i : detCH7I) {
-      mean += histo->GetBinContent(i + 1);
-    }
-    mean /= 13;
-    mStats.halfch_occs.halfch[4] = mean;
-    mean = 0;
-
-    //7O
-    for (int i : detCH7O) {
-      mean += histo->GetBinContent(i + 1);
-    }
-    mean /= 13;
-    mStats.halfch_occs.halfch[5] = mean;
-    mean = 0;
-
-    //8I
-    for (int i : detCH8I) {
-      mean += histo->GetBinContent(i + 1);
-    }
-    mean /= 13;
-    mStats.halfch_occs.halfch[6] = mean;
-    mean = 0;
-
-    //8O
-    for (int i : detCH8O) {
-      mean += histo->GetBinContent(i + 1);
-    }
-    mean /= 13;
-    mStats.halfch_occs.halfch[7] = mean;
-    mean = 0;
-
-    //9I
-    for (int i : detCH9I) {
-      mean += histo->GetBinContent(i + 1);
-    }
-    mean /= 13;
-    mStats.halfch_occs.halfch[8] = mean;
-    mean = 0;
-
-    //9O
-    for (int i : detCH9O) {
-      mean += histo->GetBinContent(i + 1);
-    }
-    mean /= 13;
-    mStats.halfch_occs.halfch[9] = mean;
-    mean = 0;
-
-    //10I
-    for (int i : detCH10I) {
-      mean += histo->GetBinContent(i + 1);
-    }
-    mean /= 13;
-    mStats.halfch_occs.halfch[10] = mean;
-    mean = 0;
-
-    //10O
-    for (int i : detCH10O) {
-      mean += histo->GetBinContent(i + 1);
-    }
-    mean /= 13;
-    mStats.halfch_occs.halfch[11] = mean;
-    mean = 0;
-
-    //      for(int i=807; i<=819; i++){
-    //          mean += histo->GetBinContent(i+1);
-    //      }
-    //      mean /= 13;
-    //      mStats.halfch_occs.halfch[7] = mean;
-
-    std::cout << "Value DE500 obtained from reductor " << mStats.indiv_occs.indiv[0] << std::endl;
-    std::cout << "Value Ch5I obtained from reductor " << mStats.halfch_occs.halfch[0] << std::endl;
-    std::cout << "Value Ch8O obtained from reductor " << mStats.halfch_occs.halfch[7] << std::endl;
+    deMin += 100;
   }
+
+  // compute mean value within one half-chamber
+  auto computeMean = [&](gsl::span<int> deIDs, int idx) {
+    double mean = 0;
+    for (int i : deIDs) {
+      mean += histo->GetBinContent(i + 1);
+    }
+    mean /= deIDs.size();
+    mStats.halfch_values.values[idx] = mean;
+  };
+
+  int index = 0;
+  computeMean(detCH5I, index++);
+  computeMean(detCH5O, index++);
+  computeMean(detCH6I, index++);
+  computeMean(detCH6O, index++);
+  computeMean(detCH7I, index++);
+  computeMean(detCH7O, index++);
+  computeMean(detCH8I, index++);
+  computeMean(detCH8O, index++);
+  computeMean(detCH9I, index++);
+  computeMean(detCH9O, index++);
+  computeMean(detCH10I, index++);
+  computeMean(detCH10O, index++);
 }
 
 } // namespace o2::quality_control_modules::muonchambers

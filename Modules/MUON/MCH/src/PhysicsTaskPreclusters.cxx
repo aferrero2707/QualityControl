@@ -25,32 +25,9 @@
 
 using namespace std;
 using namespace o2::mch::raw;
+using namespace o2::quality_control::core;
 
 // #define QC_MCH_SAVE_TEMP_ROOTFILE 1
-
-struct CRUheader {
-  uint8_t header_version;
-  uint8_t header_size;
-  uint16_t block_length;
-  uint16_t fee_id;
-  uint8_t priority_bit;
-  uint8_t reserved_1;
-  uint16_t next_packet_offset;
-  uint16_t memory_size;
-  uint8_t link_id;
-  uint8_t packet_counter;
-  uint16_t source_id;
-  uint32_t hb_orbit;
-};
-
-enum decode_state_t {
-  DECODE_STATE_UNKNOWN,
-  DECODE_STATE_SYNC_FOUND,
-  DECODE_STATE_HEADER_FOUND,
-  DECODE_STATE_CSIZE_FOUND,
-  DECODE_STATE_CTIME_FOUND,
-  DECODE_STATE_SAMPLE_FOUND
-};
 
 namespace o2
 {
@@ -142,7 +119,7 @@ void PhysicsTaskPreclusters::startOfCycle()
   QcInfoLogger::GetInstance() << "startOfCycle" << AliceO2::InfoLogger::InfoLogger::endm;
 }
 
-void PhysicsTaskPreclusters::monitorDataPreclusters(o2::framework::ProcessingContext& ctx)
+void PhysicsTaskPreclusters::monitorData(o2::framework::ProcessingContext& ctx)
 {
   // get the input preclusters and associated digits
   auto preClusters = ctx.inputs().get<gsl::span<o2::mch::PreCluster>>("preclusters");
@@ -160,24 +137,8 @@ void PhysicsTaskPreclusters::monitorDataPreclusters(o2::framework::ProcessingCon
   }
 }
 
-void PhysicsTaskPreclusters::monitorData(o2::framework::ProcessingContext& ctx)
-{
-  bool preclustersFound = false;
-  bool preclusterDigitsFound = false;
-  for (auto&& input : ctx.inputs()) {
-    if (input.spec->binding == "preclusters") {
-      preclustersFound = true;
-    }
-    if (input.spec->binding == "preclusterdigits") {
-      preclusterDigitsFound = true;
-    }
-  }
-  if (preclustersFound && preclusterDigitsFound) {
-    monitorDataPreclusters(ctx);
-  }
-}
-
 //_________________________________________________________________________________________________
+// compute the center-of-gravity of a given pre-cluster
 static void CoG(gsl::span<const o2::mch::Digit> precluster, double& Xcog, double& Ycog, bool isWide[2])
 {
 
@@ -200,7 +161,7 @@ static void CoG(gsl::span<const o2::mch::Digit> precluster, double& Xcog, double
   int detid = precluster[0].getDetID();
   const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(detid);
 
-  for (size_t i = 0; i < precluster.size(); ++i) {
+  for (ssize_t i = 0; i < precluster.size(); ++i) {
     const o2::mch::Digit& digit = precluster[i];
     int padid = digit.getPadID();
 
@@ -266,52 +227,14 @@ static void CoG(gsl::span<const o2::mch::Digit> precluster, double& Xcog, double
   Ycog = (ysize[0] < ysize[1]) ? y[0] : y[1];
 }
 
-void PhysicsTaskPreclusters::printPreclusters(gsl::span<const o2::mch::PreCluster> preClusters, gsl::span<const o2::mch::Digit> digits)
-{
-  for (auto& preCluster : preClusters) {
-    // get the digits of this precluster
-    auto preClusterDigits = digits.subspan(preCluster.firstDigit, preCluster.nDigits);
-
-    bool cathode[2] = { false, false };
-    float chargeSum[2] = { 0, 0 };
-    float chargeMax[2] = { 0, 0 };
-
-    int detid = preClusterDigits[0].getDetID();
-    const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(detid);
-
-    for (size_t i = 0; i < preClusterDigits.size(); ++i) {
-      const o2::mch::Digit& digit = preClusterDigits[i];
-      int padid = digit.getPadID();
-
-      // cathode index
-      int cid = segment.isBendingPad(padid) ? 0 : 1;
-      cathode[cid] = true;
-      chargeSum[cid] += digit.getADC();
-
-      if (digit.getADC() > chargeMax[cid]) {
-        chargeMax[cid] = digit.getADC();
-      }
-    }
-
-    double Xcog, Ycog;
-    bool isWide[2];
-    CoG(preClusterDigits, Xcog, Ycog, isWide);
-
-    QcInfoLogger::GetInstance() << "[pre-cluster] charge = " << chargeSum[0] << " " << chargeSum[1] << "   CoG = " << Xcog << " " << AliceO2::InfoLogger::InfoLogger::endm;
-    for (auto& d : preClusterDigits) {
-      float X = segment.padPositionX(d.getPadID());
-      float Y = segment.padPositionY(d.getPadID());
-      bool bend = !segment.isBendingPad(d.getPadID());
-      QcInfoLogger::GetInstance() << fmt::format("  DE {:4d}  PAD {:5d}  ADC {:6d}  TIME ({} {} {:4d})",
-                                                 d.getDetID(), d.getPadID(), d.getADC(), d.getTime().orbit, d.getTime().bunchCrossing, d.getTime().sampaTime)
-                                  << "\n"
-                                  << fmt::format("  CATHODE {}  PAD_XY {:+2.2f} , {:+2.2f}", (int)bend, X, Y) << AliceO2::InfoLogger::InfoLogger::endm;
-    }
-  }
-}
-
+//_________________________________________________________________________________________________
 bool PhysicsTaskPreclusters::plotPrecluster(const o2::mch::PreCluster& preCluster, gsl::span<const o2::mch::Digit> digits)
 {
+  // filter out single-pad clusters
+  if (preCluster.nDigits < 2) {
+    return true;
+  }
+
   // get the digits of this precluster
   auto preClusterDigits = digits.subspan(preCluster.firstDigit, preCluster.nDigits);
 
@@ -322,7 +245,7 @@ bool PhysicsTaskPreclusters::plotPrecluster(const o2::mch::PreCluster& preCluste
   int detid = preClusterDigits[0].getDetID();
   const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(detid);
 
-  for (size_t i = 0; i < preClusterDigits.size(); ++i) {
+  for (ssize_t i = 0; i < preClusterDigits.size(); ++i) {
     const o2::mch::Digit& digit = preClusterDigits[i];
     int padid = digit.getPadID();
 
@@ -336,11 +259,6 @@ bool PhysicsTaskPreclusters::plotPrecluster(const o2::mch::PreCluster& preCluste
     }
   }
 
-  // filter out single-pad clusters
-  if (preCluster.nDigits < 2) {
-    return true;
-  }
-
   float chargeTot = chargeSum[0] + chargeSum[1];
   auto hCharge = mHistogramClchgDE.find(detid);
   if ((hCharge != mHistogramClchgDE.end()) && (hCharge->second != NULL)) {
@@ -352,9 +270,7 @@ bool PhysicsTaskPreclusters::plotPrecluster(const o2::mch::PreCluster& preCluste
   }
 
   // filter out clusters with small charge, which are likely to be noise
-  if ((chargeSum[0] + chargeSum[1]) < 100) {
-    return true;
-  }
+  // and should not be used for estimating the pseudo-efficiency
   if ((chargeMax[0] < 100) && (chargeMax[1] < 100)) {
     return true;
   }
@@ -390,6 +306,49 @@ bool PhysicsTaskPreclusters::plotPrecluster(const o2::mch::PreCluster& preCluste
   }
 
   return (cathode[0] && cathode[1]);
+}
+
+//_________________________________________________________________________________________________
+void PhysicsTaskPreclusters::printPreclusters(gsl::span<const o2::mch::PreCluster> preClusters, gsl::span<const o2::mch::Digit> digits)
+{
+  for (auto& preCluster : preClusters) {
+    // get the digits of this precluster
+    auto preClusterDigits = digits.subspan(preCluster.firstDigit, preCluster.nDigits);
+
+    float chargeSum[2] = { 0, 0 };
+    float chargeMax[2] = { 0, 0 };
+
+    int detid = preClusterDigits[0].getDetID();
+    const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(detid);
+
+    for (ssize_t i = 0; i < preClusterDigits.size(); ++i) {
+      const o2::mch::Digit& digit = preClusterDigits[i];
+      int padid = digit.getPadID();
+
+      // cathode index
+      int cid = segment.isBendingPad(padid) ? 0 : 1;
+      chargeSum[cid] += digit.getADC();
+
+      if (digit.getADC() > chargeMax[cid]) {
+        chargeMax[cid] = digit.getADC();
+      }
+    }
+
+    double Xcog, Ycog;
+    bool isWide[2];
+    CoG(preClusterDigits, Xcog, Ycog, isWide);
+
+    QcInfoLogger::GetInstance() << "[pre-cluster] charge = " << chargeSum[0] << " " << chargeSum[1] << "   CoG = " << Xcog << " " << AliceO2::InfoLogger::InfoLogger::endm;
+    for (auto& d : preClusterDigits) {
+      float X = segment.padPositionX(d.getPadID());
+      float Y = segment.padPositionY(d.getPadID());
+      bool bend = !segment.isBendingPad(d.getPadID());
+      QcInfoLogger::GetInstance() << fmt::format("  DE {:4d}  PAD {:5d}  ADC {:6d}  TIME ({} {} {:4d})",
+                                                 d.getDetID(), d.getPadID(), d.getADC(), d.getTime().orbit, d.getTime().bunchCrossing, d.getTime().sampaTime)
+                                  << "\n"
+                                  << fmt::format("  CATHODE {}  PAD_XY {:+2.2f} , {:+2.2f}", (int)bend, X, Y) << AliceO2::InfoLogger::InfoLogger::endm;
+    }
+  }
 }
 
 void PhysicsTaskPreclusters::endOfCycle()
@@ -436,46 +395,54 @@ void PhysicsTaskPreclusters::endOfCycle()
   mHistogramPseudoeff[2]->add(mHistogramPreclustersXY[3], mHistogramPreclustersXY[3]);
   mHistogramPseudoeff[2]->Divide(mHistogramPseudoeff[0]);
 
+  // Using PseudoeffXY to get the mean pseudoeff per DE on last cycle
+  auto hMean = mMeanPseudoeffPerDE;
+  auto hMeanCycle = mMeanPseudoeffPerDECycle;
+
+  for (int de = 0; de < 1100; de++) {
+    auto hnum = mHistogramPreclustersXY[0].find(de);
+    auto hBNB = mHistogramPreclustersXY[3].find(de);
+    if ((hBNB != mHistogramPreclustersXY[3].end()) && (hBNB->second != NULL) && (hnum != mHistogramPreclustersXY[0].end()) && (hnum->second != NULL)) {
+      NewPreclBNBDE[de] = 0;
+      NewPreclNumDE[de] = 0;
+      for (int binx = 1; binx < hBNB->second->GetXaxis()->GetNbins() + 1; binx++) {
+        for (int biny = 1; biny < hBNB->second->GetYaxis()->GetNbins() + 1; biny++) {
+          NewPreclBNBDE[de] += hBNB->second->GetBinContent(binx, biny);
+        }
+      }
+      for (int binx = 1; binx < hnum->second->GetXaxis()->GetNbins() + 1; binx++) {
+        for (int biny = 1; biny < hnum->second->GetYaxis()->GetNbins() + 1; biny++) {
+          NewPreclNumDE[de] += hnum->second->GetBinContent(binx, biny);
+        }
+      }
+    }
+  }
+  for (int i = 0; i < 1100; i++) {
+    MeanPseudoeffDE[i] = 0;
+    MeanPseudoeffDECycle[i] = 0;
+    if (NewPreclNumDE[i] > 0) {
+      MeanPseudoeffDE[i] = NewPreclBNBDE[i] / NewPreclNumDE[i];
+    }
+    if ((NewPreclNumDE[i] - LastPreclNumDE[i]) > 0) {
+      MeanPseudoeffDECycle[i] = (NewPreclBNBDE[i] - LastPreclBNBDE[i]) / (NewPreclNumDE[i] - LastPreclNumDE[i]);
+    }
+    hMean->SetBinContent(i + 1, MeanPseudoeffDE[i]);
+    hMeanCycle->SetBinContent(i + 1, MeanPseudoeffDECycle[i]);
+    LastPreclBNBDE[i] = NewPreclBNBDE[i];
+    LastPreclNumDE[i] = NewPreclNumDE[i];
+  }
+}
+
+void PhysicsTaskPreclusters::endOfActivity(Activity& /*activity*/)
+{
+  QcInfoLogger::GetInstance() << "endOfActivity" << AliceO2::InfoLogger::InfoLogger::endm;
+
 #ifdef QC_MCH_SAVE_TEMP_ROOTFILE
   TFile f("/tmp/qc.root", "RECREATE");
 
   {
-    // Using PseudoeffXY to get the mean pseudoeff per DE on last cycle
     auto hMean = mMeanPseudoeffPerDE;
     auto hMeanCycle = mMeanPseudoeffPerDECycle;
-
-    for (int de = 0; de < 1100; de++) {
-      auto hnum = mHistogramPreclustersXY[0].find(de);
-      auto hBNB = mHistogramPreclustersXY[3].find(de);
-      if ((hBNB != mHistogramPreclustersXY[3].end()) && (hBNB->second != NULL) && (hnum != mHistogramPreclustersXY[0].end()) && (hnum->second != NULL)) {
-        NewPreclBNBDE[de] = 0;
-        NewPreclNumDE[de] = 0;
-        for (int binx = 1; binx < hBNB->second->GetXaxis()->GetNbins() + 1; binx++) {
-          for (int biny = 1; biny < hBNB->second->GetYaxis()->GetNbins() + 1; biny++) {
-            NewPreclBNBDE[de] += hBNB->second->GetBinContent(binx, biny);
-          }
-        }
-        for (int binx = 1; binx < hnum->second->GetXaxis()->GetNbins() + 1; binx++) {
-          for (int biny = 1; biny < hnum->second->GetYaxis()->GetNbins() + 1; biny++) {
-            NewPreclNumDE[de] += hnum->second->GetBinContent(binx, biny);
-          }
-        }
-      }
-    }
-    for (int i = 0; i < 1100; i++) {
-      MeanPseudoeffDE[i] = 0;
-      MeanPseudoeffDECycle[i] = 0;
-      if (NewPreclNumDE[i] > 0) {
-        MeanPseudoeffDE[i] = NewPreclBNBDE[i] / NewPreclNumDE[i];
-      }
-      if ((NewPreclNumDE[i] - LastPreclNumDE[i]) > 0) {
-        MeanPseudoeffDECycle[i] = (NewPreclBNBDE[i] - LastPreclBNBDE[i]) / (NewPreclNumDE[i] - LastPreclNumDE[i]);
-      }
-      hMean->SetBinContent(i + 1, MeanPseudoeffDE[i]);
-      hMeanCycle->SetBinContent(i + 1, MeanPseudoeffDECycle[i]);
-      LastPreclBNBDE[i] = NewPreclBNBDE[i];
-      LastPreclNumDE[i] = NewPreclNumDE[i];
-    }
     hMean->Write();
     hMeanCycle->Write();
   }
@@ -508,11 +475,6 @@ void PhysicsTaskPreclusters::endOfCycle()
   f.Close();
 
 #endif
-}
-
-void PhysicsTaskPreclusters::endOfActivity(Activity& /*activity*/)
-{
-  QcInfoLogger::GetInstance() << "endOfActivity" << AliceO2::InfoLogger::InfoLogger::endm;
 }
 
 void PhysicsTaskPreclusters::reset()
