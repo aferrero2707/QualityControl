@@ -55,12 +55,20 @@ void PhysicsTaskPreclusters::initialize(o2::framework::InitContext& /*ctx*/)
 
   for (auto de : o2::mch::raw::deIdsForAllMCH) {
 
-    TH1F* h = new TH1F(TString::Format("QcMuonChambers_Cluster_Charge_DE%03d", de),
-                       TString::Format("QcMuonChambers - cluster charge (DE%03d)", de), 1000, 0, 50000);
+    TH2F* h = new TH2F(TString::Format("QcMuonChambers_Cluster_Charge_DE%03d", de),
+                       TString::Format("QcMuonChambers - cluster charge (DE%03d)", de), 1000, 0, 50000, 4, 0, 4);
     mHistogramClchgDE.insert(make_pair(de, h));
-    h = new TH1F(TString::Format("QcMuonChambers_Cluster_Charge_OnCycle_DE%03d", de),
-                 TString::Format("QcMuonChambers - cluster charge on cycle (DE%03d)", de), 1000, 0, 50000);
+    h = new TH2F(TString::Format("QcMuonChambers_Cluster_Charge_OnCycle_DE%03d", de),
+                 TString::Format("QcMuonChambers - cluster charge on cycle (DE%03d)", de), 1000, 0, 50000, 4, 0, 4);
     mHistogramClchgDEOnCycle.insert(make_pair(de, h));
+
+    h = new TH2F(TString::Format("QcMuonChambers_Cluster_Size_DE%03d", de),
+                 TString::Format("QcMuonChambers - cluster size (DE%03d)", de), 10, 0, 10, 3, 0, 3);
+    mHistogramClsizeDE.insert(make_pair(de, h));
+
+    h = new TH2F(TString::Format("QcMuonChambers_Cluster_Size_BNB_DE%03d", de),
+                 TString::Format("QcMuonChambers - cluster size - B vs. NB (DE%03d)", de), 10, 0, 10, 10, 0, 10);
+    mHistogramClsizeBNBDE.insert(make_pair(de, h));
 
     float Xsize = 40 * 5;
     float Xsize2 = Xsize / 2;
@@ -263,14 +271,44 @@ bool PhysicsTaskPreclusters::plotPrecluster(const o2::mch::PreCluster& preCluste
     }
   }
 
+  bool isGood[2] = {(chargeMax[0] > 100) && (multiplicity[0] > 1), (chargeMax[1] > 100) && (multiplicity[1] > 1)};
+
+  double Xcog, Ycog;
+  bool isWide[2];
+  CoG(preClusterDigits, Xcog, Ycog, isWide);
+
   float chargeTot = chargeSum[0] + chargeSum[1];
   auto hCharge = mHistogramClchgDE.find(detid);
   if ((hCharge != mHistogramClchgDE.end()) && (hCharge->second != NULL)) {
-    hCharge->second->Fill(chargeTot);
+    if ((multiplicity[0] == 1) && (multiplicity[1] == 1)) {
+    //if (isWide[0] || isWide[1]) {
+      hCharge->second->Fill(chargeTot, 0);
+    } else if ((multiplicity[0] > 1) && (multiplicity[1] == 1)) {
+    //if (isWide[0] || isWide[1]) {
+      hCharge->second->Fill(chargeTot, 1);
+    } else if ((multiplicity[0] == 1) && (multiplicity[1] > 1)) {
+    //if (isWide[0] || isWide[1]) {
+      hCharge->second->Fill(chargeTot, 2);
+    } else if ((multiplicity[0] > 1) && (multiplicity[1] > 1)) {
+    //if (isWide[0] || isWide[1]) {
+      hCharge->second->Fill(chargeTot, 3);
+    }
   }
   auto hChargeOnCycle = mHistogramClchgDEOnCycle.find(detid);
   if ((hChargeOnCycle != mHistogramClchgDEOnCycle.end()) && (hChargeOnCycle->second != NULL)) {
-    hChargeOnCycle->second->Fill(chargeTot);
+    hChargeOnCycle->second->Fill(chargeTot, 0);
+  }
+
+  auto hSize = mHistogramClsizeDE.find(detid);
+  if ((hSize != mHistogramClsizeDE.end()) && (hSize->second != NULL)) {
+    hSize->second->Fill(multiplicity[0], 0);
+    hSize->second->Fill(multiplicity[1], 1);
+    hSize->second->Fill(multiplicity[0]+multiplicity[1], 2);
+  }
+
+  auto hSize2 = mHistogramClsizeBNBDE.find(detid);
+  if ((hSize2 != mHistogramClsizeBNBDE.end()) && (hSize2->second != NULL)) {
+    hSize2->second->Fill(multiplicity[0], multiplicity[1]);
   }
 
   // filter out clusters with small charge, which are likely to be noise
@@ -278,13 +316,6 @@ bool PhysicsTaskPreclusters::plotPrecluster(const o2::mch::PreCluster& preCluste
   if ((chargeMax[0] < 100) && (chargeMax[1] < 100)) {
     return true;
   }
-
-  bool isGood[2] = {(chargeMax[0] > 100) && (multiplicity[0] > 1), (chargeMax[1] > 100) && (multiplicity[1] > 1)};
-
-  double Xcog, Ycog;
-  bool isWide[2];
-  CoG(preClusterDigits, Xcog, Ycog, isWide);
-
   // Filling histograms to be used for Pseudo-efficiency computation
 
   // All meaningful preclusters (the breakdown is done in the histograms below)
@@ -486,6 +517,18 @@ void PhysicsTaskPreclusters::endOfActivity(Activity& /*activity*/)
       }
     }
     for (auto& h : mHistogramClchgDEOnCycle) {
+      if (h.second != nullptr) {
+        h.second->Write();
+        h.second->Reset();
+      }
+    }
+    for (auto& h : mHistogramClsizeDE) {
+      if (h.second != nullptr) {
+        h.second->Write();
+        h.second->Reset();
+      }
+    }
+    for (auto& h : mHistogramClsizeBNBDE) {
       if (h.second != nullptr) {
         h.second->Write();
         h.second->Reset();

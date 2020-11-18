@@ -61,9 +61,10 @@ class PhysicsTaskPreclusters /*final*/ : public o2::quality_control::core::TaskI
   TH1F* mMeanPseudoeffPerDE;
   TH1F* mMeanPseudoeffPerDECycle;
 
-  std::map<int, TH1F*> mHistogramClchgDE;
-  std::map<int, TH1F*> mHistogramClchgDEOnCycle;
-  std::map<int, TH1F*> mHistogramClsizeDE;
+  std::map<int, TH2F*> mHistogramClchgDE;
+  std::map<int, TH2F*> mHistogramClchgDEOnCycle;
+  std::map<int, TH2F*> mHistogramClsizeDE;
+  std::map<int, TH2F*> mHistogramClsizeBNBDE;
 
   std::map<int, TH2F*> mHistogramPreclustersXY[4];
   std::map<int, TH2F*> mHistogramPseudoeffXY[3];
