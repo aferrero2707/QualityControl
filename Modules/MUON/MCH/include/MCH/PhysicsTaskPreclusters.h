@@ -44,7 +44,10 @@ class PhysicsTaskPreclusters /*final*/ : public o2::quality_control::core::TaskI
   void reset() override;
 
   bool plotPrecluster(const o2::mch::PreCluster& preCluster, gsl::span<const o2::mch::Digit> digits);
+  void printPrecluster(gsl::span<const o2::mch::Digit> preClusterDigits);
   void printPreclusters(gsl::span<const o2::mch::PreCluster> preClusters, gsl::span<const o2::mch::Digit> digits);
+
+  void computePseudoEfficiency();
 
  private:
   double MeanPseudoeffDE[1100];
@@ -60,6 +63,10 @@ class PhysicsTaskPreclusters /*final*/ : public o2::quality_control::core::TaskI
   // TH1 of Mean Pseudo-efficiency on DEs, integrated or only on the elapsed cycle - Sent for Trending
   TH1F* mMeanPseudoeffPerDE;
   TH1F* mMeanPseudoeffPerDECycle;
+
+  TH2F* mDigitChargeVsSize[4];
+  TH2F* mDigitClsizeVsCharge[2];
+  TH2F* mDigitChargeNBVsChargeB;
 
   std::map<int, TH2F*> mHistogramClchgDE;
   std::map<int, TH2F*> mHistogramClchgDEOnCycle;

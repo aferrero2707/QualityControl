@@ -53,6 +53,19 @@ void PhysicsTaskPreclusters::initialize(o2::framework::InitContext& /*ctx*/)
   mMeanPseudoeffPerDECycle = new TH1F("QcMuonChambers_MeanPseudoeff_OnCycle", "Mean Pseudoeff of each DE during the cycle", 1100, -0.5, 1099.5);
   getObjectsManager()->startPublishing(mMeanPseudoeffPerDECycle);
 
+  for (int i = 0; i < 4; i++) {
+    mDigitChargeVsSize[i] = new TH2F(TString::Format("QcMuonChambers_Digit_Charge_vs_Size_%d", i),
+        TString::Format("QcMuonChambers - digit charge vs size (%d)", i), 10000, 0, 10000, 200, 0, 200);
+  }
+
+  mDigitClsizeVsCharge[0] = new TH2F("QcMuonChambers_Digit_Cluster_Size_vs_Charge_B",
+      "QcMuonChambers - digit cluster size vs charge (B)", 1000, 0, 50000, 20, 0, 20);
+  mDigitClsizeVsCharge[1] = new TH2F("QcMuonChambers_Digit_Cluster_Size_vs_Charge_NB",
+      "QcMuonChambers - digit cluster size vs charge (NB)", 1000, 0, 50000, 20, 0, 20);
+
+  mDigitChargeNBVsChargeB = new TH2F("QcMuonChambers_Digit_Charge_NB_vs_Charge_B",
+      "QcMuonChambers - charge - NB vs B", 1000, 0, 50000, 1000, 0, 50000);
+
   for (auto de : o2::mch::raw::deIdsForAllMCH) {
 
     TH2F* h = new TH2F(TString::Format("QcMuonChambers_Cluster_Charge_DE%03d", de),
@@ -134,6 +147,8 @@ void PhysicsTaskPreclusters::monitorData(o2::framework::ProcessingContext& ctx)
   auto preClusters = ctx.inputs().get<gsl::span<o2::mch::PreCluster>>("preclusters");
   auto digits = ctx.inputs().get<gsl::span<o2::mch::Digit>>("preclusterdigits");
 
+  if (digits.size() > 10) return;
+
   bool print = false;
   for (auto& p : preClusters) {
     if (!plotPrecluster(p, digits)) {
@@ -157,8 +172,8 @@ static void CoG(gsl::span<const o2::mch::Digit> precluster, double& Xcog, double
   double ymax = -1E9;
   double charge[] = { 0.0, 0.0 };
   int multiplicity[] = { 0, 0 };
-  double padXPos[] = { 0, 0 };
-  double padYPos[] = { 0, 0 };
+  //double padXPos[] = { 0, 0 };
+  //double padYPos[] = { 0, 0 };
   isWide[0] = isWide[1] = false;
   // isWide tells if a given precluster is extended enough on a given cathode. On the bending side for exemple, a wide precluster would have at least 2 pads fired in the x direction (so when clustering it, we obtain a meaningful value for x). If a precluster is not wide and on a single cathode, when clustering, one of the coordinates will not be computed properly and set to the center of the pad by default.
 
@@ -167,6 +182,8 @@ static void CoG(gsl::span<const o2::mch::Digit> precluster, double& Xcog, double
 
   double xsize[] = { 0.0, 0.0 };
   double ysize[] = { 0.0, 0.0 };
+
+  std::set<double> padPos[2];
 
   int detid = precluster[0].getDetID();
   const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(detid);
@@ -195,22 +212,10 @@ static void CoG(gsl::span<const o2::mch::Digit> precluster, double& Xcog, double
     ysize[cathode] += padSize[1];
     charge[cathode] += digit.getADC();
 
-    if (multiplicity[cathode] == 0) {
-      if (cathode == 0) {
-        padXPos[0] = padPosition[0];
-        padYPos[0] = padPosition[1];
-      }
-      if (cathode == 1) {
-        padXPos[1] = padPosition[0];
-        padYPos[1] = padPosition[1];
-      }
-    } else if (multiplicity[cathode] > 0) {
-      if ((cathode == 0) && (padXPos[0] != padPosition[0])) {
-        isWide[0] = true;
-      }
-      if ((cathode == 1) && (padYPos[1] != padPosition[1])) {
-        isWide[1] = true;
-      }
+    if (cathode == 0) {
+      padPos[0].insert(padPosition[1]);
+    } else if (cathode == 1) {
+      padPos[1].insert(padPosition[0]);
     }
 
     multiplicity[cathode] += 1;
@@ -232,6 +237,9 @@ static void CoG(gsl::span<const o2::mch::Digit> precluster, double& Xcog, double
     }
   }
 
+  isWide[0] = (padPos[0].size() > 1);
+  isWide[1] = (padPos[1].size() > 1);
+
   // each CoG coordinate is taken from the cathode with the best precision
   Xcog = (xsize[0] < xsize[1]) ? x[0] : x[1];
   Ycog = (ysize[0] < ysize[1]) ? y[0] : y[1];
@@ -248,14 +256,19 @@ bool PhysicsTaskPreclusters::plotPrecluster(const o2::mch::PreCluster& preCluste
   // get the digits of this precluster
   auto preClusterDigits = digits.subspan(preCluster.firstDigit, preCluster.nDigits);
 
+  // whether a cathode has digits or not
   bool cathode[2] = { false, false };
+  // total charge on each cathode
   float chargeSum[2] = { 0, 0 };
+  // largest signal in each cathode
   float chargeMax[2] = { 0, 0 };
+  // number of digits in each cathode
   int multiplicity[2] = { 0, 0 };
 
   int detid = preClusterDigits[0].getDetID();
   const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(detid);
 
+  // loop over digits and collect information on charge and multiplicity
   for (ssize_t i = 0; i < preClusterDigits.size(); ++i) {
     const o2::mch::Digit& digit = preClusterDigits[i];
     int padid = digit.getPadID();
@@ -271,60 +284,28 @@ bool PhysicsTaskPreclusters::plotPrecluster(const o2::mch::PreCluster& preCluste
     }
   }
 
-  bool isGood[2] = {(chargeMax[0] > 100) && (multiplicity[0] > 1), (chargeMax[1] > 100) && (multiplicity[1] > 1)};
-
+  // compute center-of-gravity of the charge distribution
   double Xcog, Ycog;
   bool isWide[2];
   CoG(preClusterDigits, Xcog, Ycog, isWide);
 
-  float chargeTot = chargeSum[0] + chargeSum[1];
-  auto hCharge = mHistogramClchgDE.find(detid);
-  if ((hCharge != mHistogramClchgDE.end()) && (hCharge->second != NULL)) {
-    if ((multiplicity[0] == 1) && (multiplicity[1] == 1)) {
-    //if (isWide[0] || isWide[1]) {
-      hCharge->second->Fill(chargeTot, 0);
-    } else if ((multiplicity[0] > 1) && (multiplicity[1] == 1)) {
-    //if (isWide[0] || isWide[1]) {
-      hCharge->second->Fill(chargeTot, 1);
-    } else if ((multiplicity[0] == 1) && (multiplicity[1] > 1)) {
-    //if (isWide[0] || isWide[1]) {
-      hCharge->second->Fill(chargeTot, 2);
-    } else if ((multiplicity[0] > 1) && (multiplicity[1] > 1)) {
-    //if (isWide[0] || isWide[1]) {
-      hCharge->second->Fill(chargeTot, 3);
-    }
-  }
-  auto hChargeOnCycle = mHistogramClchgDEOnCycle.find(detid);
-  if ((hChargeOnCycle != mHistogramClchgDEOnCycle.end()) && (hChargeOnCycle->second != NULL)) {
-    hChargeOnCycle->second->Fill(chargeTot, 0);
-  }
+  //if ((multiplicity[0] > 0) && !isWide[0] && (multiplicity[1] > 0) && !isWide[1]) printPrecluster(preClusterDigits);
+  //if ((multiplicity[0] == 1) && !isWide[0] && (multiplicity[1] == 1) && !isWide[1]) printPrecluster(preClusterDigits);
 
-  auto hSize = mHistogramClsizeDE.find(detid);
-  if ((hSize != mHistogramClsizeDE.end()) && (hSize->second != NULL)) {
-    hSize->second->Fill(multiplicity[0], 0);
-    hSize->second->Fill(multiplicity[1], 1);
-    hSize->second->Fill(multiplicity[0]+multiplicity[1], 2);
-  }
+  // criteria to define a "good" charge cluster in one cathode:
+  // - two or more digits
+  // - at least one digit with amplitude > 100 ADC
+  bool isGood[2] = {(chargeMax[0] > 50) && (isWide[0]), (chargeMax[1] > 50) && (isWide[1])};
+  //bool isGood[2] = {isWide[0], isWide[1]};
 
-  auto hSize2 = mHistogramClsizeBNBDE.find(detid);
-  if ((hSize2 != mHistogramClsizeBNBDE.end()) && (hSize2->second != NULL)) {
-    hSize2->second->Fill(multiplicity[0], multiplicity[1]);
-  }
-
-  // filter out clusters with small charge, which are likely to be noise
-  // and should not be used for estimating the pseudo-efficiency
-  if ((chargeMax[0] < 100) && (chargeMax[1] < 100)) {
-    return true;
-  }
   // Filling histograms to be used for Pseudo-efficiency computation
-
-  // All meaningful preclusters (the breakdown is done in the histograms below)
   if (isGood[1]) {
+    // good cluster on non-bending side, check if there is data from the bending side as well
     auto hXY0 = mHistogramPreclustersXY[0].find(detid);
     if ((hXY0 != mHistogramPreclustersXY[0].end()) && (hXY0->second != NULL)) {
       hXY0->second->Fill(Xcog, Ycog);
     }
-    if (cathode[0]) {
+    if (cathode[0] && isWide[0]) {
       auto hXY1 = mHistogramPreclustersXY[2].find(detid);
       if ((hXY1 != mHistogramPreclustersXY[2].end()) && (hXY1->second != NULL)) {
         hXY1->second->Fill(Xcog, Ycog);
@@ -333,11 +314,12 @@ bool PhysicsTaskPreclusters::plotPrecluster(const o2::mch::PreCluster& preCluste
   }
 
   if (isGood[0]) {
+    // good cluster on bending side, check if there is data from the non-bending side as well
     auto hXY0 = mHistogramPreclustersXY[1].find(detid);
     if ((hXY0 != mHistogramPreclustersXY[1].end()) && (hXY0->second != NULL)) {
       hXY0->second->Fill(Xcog, Ycog);
     }
-    if (cathode[1]) {
+    if (cathode[1] && isWide[1]) {
       auto hXY1 = mHistogramPreclustersXY[3].find(detid);
       if ((hXY1 != mHistogramPreclustersXY[3].end()) && (hXY1->second != NULL)) {
         hXY1->second->Fill(Xcog, Ycog);
@@ -345,7 +327,129 @@ bool PhysicsTaskPreclusters::plotPrecluster(const o2::mch::PreCluster& preCluste
     }
   }
 
+  const o2::mch::mapping::CathodeSegmentation& csegment = segment.bending();
+  o2::mch::contour::Contour<double> envelop = o2::mch::mapping::getEnvelop(csegment);
+  std::vector<o2::mch::contour::Vertex<double>> vertices = envelop.getVertices();
+  o2::mch::contour::BBox<double> bbox = o2::mch::mapping::getBBox(csegment);
+  //std::cout<<"DE "<<de<<"  BBOX "<<bbox<<std::endl;
+
+  // skip a fiducial border around the active area, so that only fully-contained clusters are considered
+  if(Xcog < (bbox.xmin() + 5)) return true;
+  if(Xcog > (bbox.xmax() - 5)) return true;
+  if(Ycog < (bbox.ymin() + 5)) return true;
+  if(Ycog > (bbox.ymax() - 5)) return true;
+
+  for (ssize_t i = 0; i < preClusterDigits.size(); ++i) {
+    const o2::mch::Digit& digit = preClusterDigits[i];
+    //mDigitChargeVsSize[0]->Fill(digit.getADC(), digit.nofSamples());
+    if ((multiplicity[0] == 1) && (multiplicity[1] == 0)) {
+      mDigitChargeVsSize[0]->Fill(digit.getADC(), digit.nofSamples());
+    }
+    if ((multiplicity[0] == 0) && (multiplicity[1] == 1)) {
+      mDigitChargeVsSize[1]->Fill(digit.getADC(), digit.nofSamples());
+    }
+    if ((multiplicity[0] == 0) && (multiplicity[1] == 2)) {
+      mDigitChargeVsSize[2]->Fill(digit.getADC(), digit.nofSamples());
+    }
+    if ((multiplicity[0] > 1) && (multiplicity[1] > 1)) {
+      mDigitChargeVsSize[3]->Fill(digit.getADC(), digit.nofSamples());
+    }
+  }
+
+  // cluster size correlation between the two cathodes
+  auto hSize2 = mHistogramClsizeBNBDE.find(detid);
+  if ((hSize2 != mHistogramClsizeBNBDE.end()) && (hSize2->second != NULL)) {
+    hSize2->second->Fill(multiplicity[0], multiplicity[1]);
+  }
+
+  if (multiplicity[0] > 0) {
+    mDigitClsizeVsCharge[0]->Fill(chargeSum[0], multiplicity[0]);
+  }
+  if (multiplicity[1] > 0) {
+    mDigitClsizeVsCharge[1]->Fill(chargeSum[1], multiplicity[1]);
+  }
+
+  mDigitChargeNBVsChargeB->Fill(chargeSum[0], chargeSum[1]);
+
+  // cluster size, separately on each cathode and combined
+  auto hSize = mHistogramClsizeDE.find(detid);
+  if ((hSize != mHistogramClsizeDE.end()) && (hSize->second != NULL)) {
+    hSize->second->Fill(multiplicity[0], 0);
+    hSize->second->Fill(multiplicity[1], 1);
+    hSize->second->Fill(multiplicity[0]+multiplicity[1], 2);
+  }
+
+  float chargeTot = chargeSum[0] + chargeSum[1];
+  auto hCharge = mHistogramClchgDE.find(detid);
+  if ((hCharge != mHistogramClchgDE.end()) && (hCharge->second != NULL)) {
+    if ((multiplicity[0] <= 1) && (multiplicity[1] <= 1)) {
+    //if (isWide[0] || isWide[1]) {
+      hCharge->second->Fill(chargeTot, 0);
+    } else if ((multiplicity[0] > 1) && (multiplicity[1] == 1)) {
+    //if (isWide[0] || isWide[1]) {
+      hCharge->second->Fill(chargeTot, 1);
+    } else if ((multiplicity[0] <= 1) && (multiplicity[1] > 1)) {
+    //if (isWide[0] || isWide[1]) {
+      hCharge->second->Fill(chargeTot, 2);
+    } else if ((multiplicity[0] > 1) && (multiplicity[1] > 1)) {
+    //if (isWide[0] || isWide[1]) {
+      hCharge->second->Fill(chargeTot, 3);
+    }
+  }
+
+  auto hChargeOnCycle = mHistogramClchgDEOnCycle.find(detid);
+  if ((hChargeOnCycle != mHistogramClchgDEOnCycle.end()) && (hChargeOnCycle->second != NULL)) {
+    hChargeOnCycle->second->Fill(chargeTot, 0);
+  }
+
+  // filter out clusters with small charge, which are likely to be noise
+  // and should not be used for estimating the pseudo-efficiency
+  if ((chargeMax[0] < 100) && (chargeMax[1] < 100)) {
+    return true;
+  }
+
   return (cathode[0] && cathode[1]);
+}
+
+//_________________________________________________________________________________________________
+void PhysicsTaskPreclusters::printPrecluster(gsl::span<const o2::mch::Digit> preClusterDigits)
+{
+  float chargeSum[2] = { 0, 0 };
+  float chargeMax[2] = { 0, 0 };
+
+  int detid = preClusterDigits[0].getDetID();
+  const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(detid);
+
+  for (ssize_t i = 0; i < preClusterDigits.size(); ++i) {
+    const o2::mch::Digit& digit = preClusterDigits[i];
+    int padid = digit.getPadID();
+
+    // cathode index
+    int cid = segment.isBendingPad(padid) ? 0 : 1;
+    chargeSum[cid] += digit.getADC();
+
+    if (digit.getADC() > chargeMax[cid]) {
+      chargeMax[cid] = digit.getADC();
+    }
+  }
+
+  double Xcog, Ycog;
+  bool isWide[2];
+  CoG(preClusterDigits, Xcog, Ycog, isWide);
+
+  QcInfoLogger::GetInstance() << "\n\n\n====================\n" <<
+      "[pre-cluster] nDigits = " << preClusterDigits.size() << "  charge = " << chargeSum[0] << " " << chargeSum[1] << "   CoG = " << Xcog << "," << Ycog <<
+      AliceO2::InfoLogger::InfoLogger::endm;
+  for (auto& d : preClusterDigits) {
+    float X = segment.padPositionX(d.getPadID());
+    float Y = segment.padPositionY(d.getPadID());
+    bool bend = !segment.isBendingPad(d.getPadID());
+    QcInfoLogger::GetInstance() << fmt::format("  DE {:4d}  PAD {:5d}  ADC {:6d}  TIME ({} {} {:4d})",
+        d.getDetID(), d.getPadID(), d.getADC(), d.getTime().orbit, d.getTime().bunchCrossing, d.getTime().sampaTime)
+    << "\n"
+    << fmt::format("  CATHODE {}  PAD_XY {:+2.2f} , {:+2.2f}", (int)bend, X, Y) << AliceO2::InfoLogger::InfoLogger::endm;
+  }
+  QcInfoLogger::GetInstance() << "\n====================\n\n" << AliceO2::InfoLogger::InfoLogger::endm;
 }
 
 //_________________________________________________________________________________________________
@@ -354,49 +458,13 @@ void PhysicsTaskPreclusters::printPreclusters(gsl::span<const o2::mch::PreCluste
   for (auto& preCluster : preClusters) {
     // get the digits of this precluster
     auto preClusterDigits = digits.subspan(preCluster.firstDigit, preCluster.nDigits);
-
-    float chargeSum[2] = { 0, 0 };
-    float chargeMax[2] = { 0, 0 };
-
-    int detid = preClusterDigits[0].getDetID();
-    const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(detid);
-
-    for (ssize_t i = 0; i < preClusterDigits.size(); ++i) {
-      const o2::mch::Digit& digit = preClusterDigits[i];
-      int padid = digit.getPadID();
-
-      // cathode index
-      int cid = segment.isBendingPad(padid) ? 0 : 1;
-      chargeSum[cid] += digit.getADC();
-
-      if (digit.getADC() > chargeMax[cid]) {
-        chargeMax[cid] = digit.getADC();
-      }
-    }
-
-    double Xcog, Ycog;
-    bool isWide[2];
-    CoG(preClusterDigits, Xcog, Ycog, isWide);
-
-    QcInfoLogger::GetInstance() << "\n\n\n====================\n" <<
-        "[pre-cluster] charge = " << chargeSum[0] << " " << chargeSum[1] << "   CoG = " << Xcog << "," << Ycog <<
-        AliceO2::InfoLogger::InfoLogger::endm;
-    for (auto& d : preClusterDigits) {
-      float X = segment.padPositionX(d.getPadID());
-      float Y = segment.padPositionY(d.getPadID());
-      bool bend = !segment.isBendingPad(d.getPadID());
-      QcInfoLogger::GetInstance() << fmt::format("  DE {:4d}  PAD {:5d}  ADC {:6d}  TIME ({} {} {:4d})",
-                                                 d.getDetID(), d.getPadID(), d.getADC(), d.getTime().orbit, d.getTime().bunchCrossing, d.getTime().sampaTime)
-                                  << "\n"
-                                  << fmt::format("  CATHODE {}  PAD_XY {:+2.2f} , {:+2.2f}", (int)bend, X, Y) << AliceO2::InfoLogger::InfoLogger::endm;
-    }
-    QcInfoLogger::GetInstance() << "\n====================\n\n" << AliceO2::InfoLogger::InfoLogger::endm;
+    printPrecluster(preClusterDigits);
   }
 }
 
-void PhysicsTaskPreclusters::endOfCycle()
+
+void PhysicsTaskPreclusters::computePseudoEfficiency()
 {
-  QcInfoLogger::GetInstance() << "endOfCycle" << AliceO2::InfoLogger::InfoLogger::endm;
   for (int de = 100; de <= 1030; de++) {
     for (int i = 0; i < 2; i++) {
       auto ih = mHistogramPreclustersXY[i + 2].find(de);
@@ -429,7 +497,7 @@ void PhysicsTaskPreclusters::endOfCycle()
         continue;
       }
 
-      // Computing the Pseudo-efficiency by dividing the distrobution of clusters (either on B, NB, or B and NB) by the total distribution of all clusters.
+      // Computing the Pseudo-efficiency by dividing the distribution of clusters (either on B, NB, or B and NB) by the total distribution of all clusters.
       hEff->Reset();
       hEff->Add(hB);
       hEff->Divide(hAll);
@@ -442,6 +510,13 @@ void PhysicsTaskPreclusters::endOfCycle()
   mHistogramPseudoeff[1]->Divide(mHistogramPseudoeff[0]);
   mHistogramPseudoeff[2]->add(mHistogramPreclustersXY[3], mHistogramPreclustersXY[3]);
   mHistogramPseudoeff[2]->Divide(mHistogramPseudoeff[0]);
+}
+
+void PhysicsTaskPreclusters::endOfCycle()
+{
+  QcInfoLogger::GetInstance() << "endOfCycle" << AliceO2::InfoLogger::InfoLogger::endm;
+
+  computePseudoEfficiency();
 
   // Using PseudoeffXY to get the mean pseudoeff per DE on last cycle
   // By counting how many preclusters have been seen in total compared to how many have been seen on B and NB, on each DE
@@ -487,6 +562,8 @@ void PhysicsTaskPreclusters::endOfActivity(Activity& /*activity*/)
   QcInfoLogger::GetInstance() << "endOfActivity" << AliceO2::InfoLogger::InfoLogger::endm;
 
 #ifdef QC_MCH_SAVE_TEMP_ROOTFILE
+  computePseudoEfficiency();
+
   TFile f("/tmp/qc-preclusters.root", "RECREATE");
 
   {
@@ -535,6 +612,15 @@ void PhysicsTaskPreclusters::endOfActivity(Activity& /*activity*/)
       }
     }
   }
+
+  for (int i = 0; i < 4; i++) {
+    mDigitChargeVsSize[i]->Write();
+  }
+
+  for (int i = 0; i < 2; i++) {
+    mDigitClsizeVsCharge[i]->Write();
+  }
+  mDigitChargeNBVsChargeB->Write();
 
   mHistogramPseudoeff[0]->Write();
   mHistogramPseudoeff[1]->Write();
