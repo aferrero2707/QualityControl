@@ -36,7 +36,8 @@ class PedestalsTask final : public TaskInterface
   void initialize(o2::framework::InitContext& ctx) override;
   void startOfActivity(Activity& activity) override;
   void startOfCycle() override;
-  void monitorDataReadout(o2::framework::ProcessingContext& ctx);
+  void monitorDataTF(o2::framework::ProcessingContext& ctx);
+  void monitorDataReadout(const o2::framework::DataRef& input);
   void monitorDataDigits(const o2::framework::DataRef& input);
   void monitorData(o2::framework::ProcessingContext& ctx) override;
   void endOfCycle() override;
@@ -49,6 +50,9 @@ class PedestalsTask final : public TaskInterface
   double pedestal[MCH_MAX_CRU_IN_FLP][24][40][64];
   double noise[MCH_MAX_CRU_IN_FLP][24][40][64];
 
+  int64_t bxc[MCH_MAX_CRU_IN_FLP][24][40][64];
+  double bxcMean[MCH_MAX_CRU_IN_FLP][24];
+
   //Matrices [de][padid], stated an upper value for de# and padid#
 
   uint64_t nhitsDigits[1100][1500];
@@ -58,13 +62,16 @@ class PedestalsTask final : public TaskInterface
   MapCRU mMapCRU[MCH_MAX_CRU_IN_FLP];
   TH2F* mHistogramPedestals;
   TH2F* mHistogramNoise;
+  TH2F* mHistogramBunchCrossing;
 
   std::vector<int> DEs;
   //MapFEC mMapFEC;
   std::map<int, TH2F*> mHistogramPedestalsDE;
   std::map<int, TH2F*> mHistogramNoiseDE;
+  std::map<int, TH1F*> mHistogramDeltaDE[2];
   std::map<int, TH2F*> mHistogramPedestalsXY[2];
   std::map<int, TH2F*> mHistogramNoiseXY[2];
+  std::map<int, TH2F*> mHistogramDsIDXY[2];
 
   std::map<int, TH1F*> mHistogramNoiseDistributionDE[5][2];
 
