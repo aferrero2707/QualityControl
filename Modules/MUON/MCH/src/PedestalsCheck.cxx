@@ -55,7 +55,7 @@ Quality PedestalsCheck::check(std::map<std::string, std::shared_ptr<MonitorObjec
   for (auto& [moName, mo] : *moMap) {
 
     (void)moName;
-    if (mo->getName().find("QcMuonChambers_Pedestals") != std::string::npos) {
+    if (mo->getName().find("QcMuonChambers_Pedestals_Elec") != std::string::npos) {
       auto* h = dynamic_cast<TH2F*>(mo->getObject());
       if (!h)
         return result;
@@ -90,7 +90,7 @@ void PedestalsCheck::beautify(std::shared_ptr<MonitorObject> mo, Quality checkRe
   //std::cout<<"===================================="<<std::endl;
   //std::cout<<"PedestalsCheck::beautify() called"<<std::endl;
   //std::cout<<"===================================="<<std::endl;
-  if (mo->getName().find("QcMuonChambers_Pedestals") != std::string::npos) {
+  if (mo->getName().find("QcMuonChambers_Pedestals_Elec") != std::string::npos) {
     auto* h = dynamic_cast<TH2F*>(mo->getObject());
     h->SetDrawOption("colz");
     TPaveText* msg = new TPaveText(0.1, 0.9, 0.9, 0.95, "NDC");
@@ -132,7 +132,7 @@ void PedestalsCheck::beautify(std::shared_ptr<MonitorObject> mo, Quality checkRe
 
   //____________________________________________________________________________
   // Noise histograms
-  if (mo->getName().find("QcMuonChambers_Noise") != std::string::npos) {
+  if (mo->getName().find("QcMuonChambers_Noise_Elec") != std::string::npos) {
     auto* h = dynamic_cast<TH2F*>(mo->getObject());
     if (!h)
       return;

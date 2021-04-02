@@ -7,20 +7,27 @@ set(SRCS
   src/GlobalHistogram.cxx
   src/PedestalsTask.cxx
   src/PhysicsTaskDigits.cxx
-  src/PhysicsTaskPreclusters.cxx
+  src/PhysicsTaskPreClusters.cxx
   src/PedestalsCheck.cxx
   src/PhysicsCheck.cxx
+  src/MCHPostProcessing.cxx
   src/TH1MCHReductor.cxx
+  src/TH2MCHReductor.cxx
+  src/GlobalHistogramReductor.cxx
 )
 
 set(HEADERS
   include/MCH/GlobalHistogram.h
   include/MCH/PedestalsTask.h
   include/MCH/PhysicsTaskDigits.h
-  include/MCH/PhysicsTaskPreclusters.h
+  include/MCH/PhysicsTaskPreClusters.h
   include/MCH/PedestalsCheck.h
   include/MCH/PhysicsCheck.h
+  include/MCH/MCHPostProcessing.h
   include/MCH/TH1MCHReductor.h
+  include/MCH/TH2MCHReductor.h
+  include/MCH/GlobalHistogramReductor.h
+  include/MCH/CustomMergeableTH2Quotient.h
 )
 
 # ---- Library ----
@@ -34,7 +41,7 @@ target_include_directories(
 )
 
 target_link_libraries(${MODULE_NAME} PUBLIC O2QualityControl O2::CommonDataFormat O2::GPUCommon
-        $<TARGET_NAME_IF_EXISTS:O2::MCHMappingFactory> O2::MCHMappingImpl4 O2::MCHMappingSegContour O2::MCHBase O2::DataFormatsMCH O2::MCHRawDecoder O2::MCHCalibration O2::MCHPreClustering)
+        $<TARGET_NAME_IF_EXISTS:O2::MCHMappingFactory> O2::MCHMappingImpl4 O2::MCHMappingSegContour O2::MCHBase O2::DataFormatsMCH O2::MCHRawDecoder O2::MCHCalibration O2::MCHPreClustering O2::Mergers)
 
 target_compile_definitions(${MODULE_NAME} PRIVATE $<$<TARGET_EXISTS:O2::MCHMappingFactory>:MCH_HAS_MAPPING_FACTORY>)
 
@@ -63,12 +70,39 @@ add_root_dictionary(${MODULE_NAME}
                     HEADERS include/MCH/GlobalHistogram.h
                             include/MCH/PedestalsTask.h
                             include/MCH/PhysicsTaskDigits.h
-                            include/MCH/PhysicsTaskPreclusters.h
-                            include/MCH/PhysicsCheck.h
+                            include/MCH/PhysicsTaskPreClusters.h
                             include/MCH/PedestalsCheck.h
+                            include/MCH/PhysicsCheck.h
+                            include/MCH/MCHPostProcessing.h
                             include/MCH/TH1MCHReductor.h
-                            include/MCH/sampa_header.h
+                            include/MCH/TH2MCHReductor.h
+                            include/MCH/GlobalHistogramReductor.h
+                            include/MCH/CustomMergeableTH2Quotient.h
                     LINKDEF include/MCH/LinkDef.h)
+                    
+# ---- Executables ----
+
+set(EXE_SRCS
+     src/TestMerging.cxx
+     src/MergeMCH.cxx)
+set(EXE_NAMES
+     o2-qc-run-test-mergin
+     o2-qc-run-mch-merger)
+
+list(LENGTH EXE_SRCS count)
+math(EXPR count "${count}-1")
+foreach(i RANGE ${count})
+  list(GET EXE_SRCS ${i} src)
+  list(GET EXE_NAMES ${i} name)
+  add_executable(${name} ${src})
+  target_link_libraries(${name} PRIVATE QualityControl QcMuonChambers)
+endforeach()
+
+install(
+  TARGETS o2-qc-run-test-mergin
+  o2-qc-run-mch-merger
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
 
 # ---- Tests ----
 
