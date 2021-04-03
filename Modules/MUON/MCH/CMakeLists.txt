@@ -7,7 +7,7 @@ set(SRCS
   src/GlobalHistogram.cxx
   src/PedestalsTask.cxx
   src/PhysicsTaskDigits.cxx
-  src/PhysicsTaskPreClusters.cxx
+  src/PhysicsTaskPreclusters.cxx
   src/PedestalsCheck.cxx
   src/PhysicsCheck.cxx
   src/MCHPostProcessing.cxx
@@ -20,7 +20,7 @@ set(HEADERS
   include/MCH/GlobalHistogram.h
   include/MCH/PedestalsTask.h
   include/MCH/PhysicsTaskDigits.h
-  include/MCH/PhysicsTaskPreClusters.h
+  include/MCH/PhysicsTaskPreclusters.h
   include/MCH/PedestalsCheck.h
   include/MCH/PhysicsCheck.h
   include/MCH/MCHPostProcessing.h
@@ -70,7 +70,7 @@ add_root_dictionary(${MODULE_NAME}
                     HEADERS include/MCH/GlobalHistogram.h
                             include/MCH/PedestalsTask.h
                             include/MCH/PhysicsTaskDigits.h
-                            include/MCH/PhysicsTaskPreClusters.h
+                            include/MCH/PhysicsTaskPreclusters.h
                             include/MCH/PedestalsCheck.h
                             include/MCH/PhysicsCheck.h
                             include/MCH/MCHPostProcessing.h
@@ -95,7 +95,7 @@ foreach(i RANGE ${count})
   list(GET EXE_SRCS ${i} src)
   list(GET EXE_NAMES ${i} name)
   add_executable(${name} ${src})
-  target_link_libraries(${name} PRIVATE QualityControl QcMuonChambers)
+  target_link_libraries(${name} PRIVATE O2QualityControl ${MODULE_NAME})
 endforeach()
 
 install(

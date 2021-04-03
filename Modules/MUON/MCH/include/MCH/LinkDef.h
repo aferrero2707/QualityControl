@@ -6,9 +6,8 @@
 //#pragma link C++ class o2::quality_control_modules::muonchambers::Decoder+;
 //#pragma link C++ class o2::quality_control_modules::muonchambers::MuonChambersMapping+;
 #pragma link C++ class o2::quality_control_modules::muonchambers::PedestalsTask + ;
-#pragma link C++ class o2::quality_control_modules::muonchambers::PhysicsTask + ;
 #pragma link C++ class o2::quality_control_modules::muonchambers::PhysicsTaskDigits + ;
-#pragma link C++ class o2::quality_control_modules::muonchambers::PhysicsTaskPreClusters + ;
+#pragma link C++ class o2::quality_control_modules::muonchambers::PhysicsTaskPreclusters + ;
 #pragma link C++ class o2::quality_control_modules::muonchambers::PedestalsCheck + ;
 #pragma link C++ class o2::quality_control_modules::muonchambers::PhysicsCheck + ;
 #pragma link C++ class o2::quality_control_modules::muonchambers::MCHPostProcessing + ;
