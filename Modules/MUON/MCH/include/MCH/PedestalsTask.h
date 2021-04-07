@@ -16,6 +16,8 @@
 class TH1F;
 class TH2F;
 
+#define MCH_MAX_DE 1100
+
 using namespace o2::quality_control::core;
 
 namespace o2::quality_control_modules::muonchambers
@@ -46,12 +48,12 @@ class PedestalsTask final : public TaskInterface
 
  private:
   Decoder mDecoder;
-  uint64_t nhits[MCH_MAX_CRU_IN_FLP][24][40][64];
-  double pedestal[MCH_MAX_CRU_IN_FLP][24][40][64];
-  double noise[MCH_MAX_CRU_IN_FLP][24][40][64];
+  uint64_t nhits[MCH_NCRU][24][40][64];
+  double pedestal[MCH_NCRU][24][40][64];
+  double noise[MCH_NCRU][24][40][64];
 
-  int64_t bxc[MCH_MAX_CRU_IN_FLP][24][40][64];
-  double bxcMean[MCH_MAX_CRU_IN_FLP][24];
+  int64_t bxc[MCH_NCRU][24][40][64];
+  double bxcMean[MCH_NCRU][24];
 
   //Matrices [de][padid], stated an upper value for de# and padid#
 
@@ -59,7 +61,7 @@ class PedestalsTask final : public TaskInterface
   double pedestalDigits[1100][1500];
   double noiseDigits[1100][1500];
 
-  MapCRU mMapCRU[MCH_MAX_CRU_IN_FLP];
+  MapCRU mMapCRU[MCH_NCRU];
   TH2F* mHistogramPedestals;
   TH2F* mHistogramNoise;
   TH2F* mHistogramBunchCrossing;
@@ -74,6 +76,10 @@ class PedestalsTask final : public TaskInterface
   std::map<int, TH2F*> mHistogramDsIDXY[2];
 
   std::map<int, TH1F*> mHistogramNoiseDistributionDE[5][2];
+
+  // mFlipDE[DE][0] -> horizontal flipping
+  // mFlipDE[DE][1] -> vertical flipping
+  bool mFlipDE[MCH_MAX_DE][2];
 
   GlobalHistogram* mHistogramPedestalsMCH;
   GlobalHistogram* mHistogramNoiseMCH;

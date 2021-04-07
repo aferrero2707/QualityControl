@@ -11,6 +11,7 @@
 #else
 #include "MCHMappingInterface/Segmentation.h"
 #endif
+#include "MCHRawElecMap/Mapper.h"
 
 using namespace std;
 
@@ -22,6 +23,17 @@ namespace quality_control_modules
 {
 namespace muonchambers
 {
+
+static bool isValidDeID(int deId)
+{
+  for (auto id : o2::mch::raw::deIdsForAllMCH) {
+    if (id == deId) {
+      return true;
+    }
+  }
+
+  return false;
+}
 
 /*
  * Solar mapping
@@ -111,7 +123,7 @@ bool MapCRU::readMapping(std::string mapFile)
     //printf("[MapCRU::readMapping]: line: %s\n", tstr);
     line >> link_id >> c >> l;
     //printf("[MapCRU::readMapping]: %d %d -> %d\n", c, l, link_id);
-    if (c < 0 || c >= MCH_MAX_CRU_IN_FLP)
+    if (c < 0 || c >= MCH_NCRU)
       continue;
     if (l < 0 || l >= 24)
       continue;
@@ -129,7 +141,7 @@ bool MapCRU::readMapping(std::string mapFile)
 int32_t MapCRU::getLink(int32_t c, int32_t l)
 {
   int32_t result = -1;
-  if (c < 0 || c >= MCH_MAX_CRU_IN_FLP)
+  if (c < 0 || c >= MCH_NCRU)
     return result;
   if (l < 0 || l >= 24)
     return result;
@@ -222,6 +234,8 @@ bool MapFEC::getPadByLinkID(uint32_t link_id, uint32_t ds_addr, uint32_t dsch, M
 
 bool MapFEC::getPadByDE(uint32_t de, uint32_t dsid, uint32_t dsch, MapPad& pad)
 {
+  if (!isValidDeID(de)) return false;
+
   const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(de);
 
   int padid = segment.findPadByFEE(dsid, dsch);

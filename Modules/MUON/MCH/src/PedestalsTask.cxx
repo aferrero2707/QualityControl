@@ -33,7 +33,7 @@ using namespace o2::framework;
 
 #define QC_MCH_SAVE_TEMP_ROOTFILE 1
 
-#define MCH_FFEID_MAX (31 * 2 + 1)
+#define MCH_FFEID_MAX ((MCH_NCRU-1) * 2 + 1)
 
 struct CRUheader {
   uint8_t header_version;
@@ -78,10 +78,17 @@ PedestalsTask::~PedestalsTask()
 
 void PedestalsTask::initialize(o2::framework::InitContext& /*ctx*/)
 {
+  auto setFlip = [&](int chmin, int chmax, int de, bool hflip, bool vflip) {
+    for (int i = chmin; i <= chmax; i++) {
+      mFlipDE[i*100+de][0] = hflip;
+      mFlipDE[i*100+de][1] = vflip;
+    }
+  };
+
   QcInfoLogger::GetInstance() << "initialize PedestalsTask" << AliceO2::InfoLogger::InfoLogger::endm;
   if (true) {
 
-    for (int c = 0; c < MCH_MAX_CRU_IN_FLP; c++) {
+    for (int c = 0; c < MCH_NCRU; c++) {
       for (int l = 0; l < 24; l++) {
         for (int i = 0; i < 40; i++) {
           for (int j = 0; j < 64; j++) {
@@ -92,12 +99,28 @@ void PedestalsTask::initialize(o2::framework::InitContext& /*ctx*/)
       }
     }
 
-    for (int de = 0; de < 1100; de++) {
+    for (int de = 0; de < MCH_MAX_DE; de++) {
       for (int padid = 0; padid < 1500; padid++) {
         nhitsDigits[de][padid] = 0;
         pedestalDigits[de][padid] = noiseDigits[de][padid] = 0;
       }
+      mFlipDE[de][0] = false;
+      mFlipDE[de][1] = false;
     }
+
+    /**/
+    setFlip(7, 10, 0, false, true);
+    setFlip(7, 10, 1, true, false);
+    setFlip(7, 10, 2, false, true);
+    setFlip(7, 10, 4, false, true);
+    setFlip(7, 10, 6, false, true);
+    setFlip(7, 10, 9, true, true);
+    setFlip(7, 10, 14, false, true);
+    setFlip(7, 10, 20, false, true);
+    setFlip(7, 10, 22, false, true);
+    setFlip(7, 10, 24, false, true);
+    setFlip(7, 10, 25, true, true);
+    /**/
 
     mDecoder.initialize();
 
@@ -121,7 +144,7 @@ void PedestalsTask::initialize(o2::framework::InitContext& /*ctx*/)
 
     uint32_t dsid;
     std::vector<int> DEs;
-    for (int cruid = 0; cruid < 31; cruid++) {
+    for (int cruid = 0; cruid < MCH_NCRU; cruid++) {
 
       for (int linkid = 0; linkid < 24; linkid++) {
 
@@ -510,8 +533,8 @@ void PedestalsTask::monitorDataReadout(const o2::framework::DataRef& input)
   // Reset the hits container
   mDecoder.reset();
 
-  uint64_t bxcEntries[MCH_MAX_CRU_IN_FLP][24];
-  for (int c = 0; c < MCH_MAX_CRU_IN_FLP; c++) {
+  uint64_t bxcEntries[MCH_NCRU][24];
+  for (int c = 0; c < MCH_NCRU; c++) {
     for (int l = 0; l < 24; l++) {
       for (int i = 0; i < 40; i++) {
         for (int j = 0; j < 64; j++) {
@@ -534,7 +557,7 @@ void PedestalsTask::monitorDataReadout(const o2::framework::DataRef& input)
   auto const* rdh6 = (const o2::header::RAWDataHeaderV6*)(raw);
   auto const& rdh = *rdh6;
 
-  if (mPrintLevel >= 0) {
+  if (mPrintLevel >= 1) {
     std::cout<<"\n\npayloadSize: "<<payloadSize<<std::endl;
     std::cout<<"raw:     "<<(void*)raw<<std::endl;
     std::cout<<"rdh:     "<<(void*)rdh6<<std::endl;
@@ -567,7 +590,7 @@ void PedestalsTask::monitorDataReadout(const o2::framework::DataRef& input)
     bxcEntries[hit.cru_id][hit.link_id] += 1;
   }
 
-  for (int c = 0; c < MCH_MAX_CRU_IN_FLP; c++) {
+  for (int c = 0; c < MCH_NCRU; c++) {
     for (int l = 0; l < 24; l++) {
       if (bxcEntries[c][l] > 0) {
         bxcMean[c][l] /= bxcEntries[c][l];
@@ -652,6 +675,8 @@ void PedestalsTask::monitorDataReadout(const o2::framework::DataRef& input)
     float padY = hit.pad.fY;
     float padSizeX = hit.pad.fSizeX;
     float padSizeY = hit.pad.fSizeY;
+    if (mFlipDE[de][0]) padX *= -1;
+    if (mFlipDE[de][1]) padY *= -1;
 
     if (printHit) fprintf(stdout, "mapping: link_id=%d ds_addr=%d chan_addr=%d  ==>  de=%d dsid=%d x=%f y=%f sx=%f sy=%f\n",
         hit.link_id, hit.ds_addr, hit.chan_addr, de, dsid, padX, padY, padSizeX, padSizeY);

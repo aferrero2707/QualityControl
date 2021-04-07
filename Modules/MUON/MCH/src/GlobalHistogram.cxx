@@ -361,7 +361,7 @@ void GlobalHistogram::set(std::map<int, TH2F*>& histB, std::map<int, TH2F*>& his
       continue;
     }
 
-    bool swapX = getLR(de) == 1;
+    bool swapX = false; //getLR(de) == 1;
 
     //std::cout<<"[GlobalHistogram::set] de="<<de<<"  swapX="<<swapX<<std::endl;
 

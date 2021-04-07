@@ -12,6 +12,7 @@
 
 #define MCH_DE_MAX 2000
 #define MCH_DSID_MAX 2047
+#define MCH_NCRU 32
 #define MCH_MAX_CRU_ID 31
 #define MCH_MAX_CRU_IN_FLP 31
 #define LINKID_MAX 0x7FF

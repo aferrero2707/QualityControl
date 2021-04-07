@@ -886,7 +886,7 @@ void Decoder::initialize()
   mMapFEC.readDSMapping("fec.map");
 
   fprintf(stdout, "initialize ds_enable\n");
-  for (int c = 0; c < MCH_MAX_CRU_IN_FLP; c++) {
+  for (int c = 0; c < MCH_NCRU; c++) {
     for (int l = 0; l < 24; l++) {
       int32_t link_id = mMapCRU.getLink(c, l);
       if (link_id < 0) {
@@ -911,7 +911,7 @@ void Decoder::initialize()
   while (!ds_enable_f.fail()) {
     int c, l, b, e;
     ds_enable_f >> c >> l >> b >> e;
-    if (c < 0 || c >= MCH_MAX_CRU_IN_FLP)
+    if (c < 0 || c >= MCH_NCRU)
       continue;
     if (l < 0 || l >= 24)
       continue;

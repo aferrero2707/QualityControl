@@ -114,10 +114,10 @@ class Decoder
   MapFEC& getMapFEC() { return mMapFEC; }
 
  private:
-  int hb_orbits[MCH_MAX_CRU_ID][24];
-  DualSampa ds[MCH_MAX_CRU_ID][24][40];
-  DualSampaGroup dsg[MCH_MAX_CRU_ID][24][8];
-  int ds_enable[MCH_MAX_CRU_IN_FLP][24][40];
+  int hb_orbits[MCH_NCRU][24];
+  DualSampa ds[MCH_NCRU][24][40];
+  DualSampaGroup dsg[MCH_NCRU][24][8];
+  int ds_enable[MCH_NCRU][24][40];
   std::vector<SampaHit> mHits;
   std::vector<o2::mch::Digit> mDigits;
   int nFrames;
