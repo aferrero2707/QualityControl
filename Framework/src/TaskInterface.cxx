@@ -55,7 +55,7 @@ void TaskInterface::setCustomParameters(const std::unordered_map<std::string, st
 TObject* TaskInterface::retrieveCondition(std::string path, std::map<std::string, std::string> metadata, long timestamp)
 {
   if (mCcdbApi) {
-    return mCcdbApi->retrieve(path, metadata, timestamp);
+    return mCcdbApi->retrieveFromTFileAny<TObject>(path, metadata, timestamp);
   } else {
     ILOG(Error, Support) << "Trying to retrieve a condition, but CCDB API is not constructed." << ENDM;
     return nullptr;
@@ -63,5 +63,10 @@ TObject* TaskInterface::retrieveCondition(std::string path, std::map<std::string
 }
 
 std::shared_ptr<ObjectsManager> TaskInterface::getObjectsManager() { return mObjectsManager; }
+
+void TaskInterface::setMonitoring(const std::shared_ptr<o2::monitoring::Monitoring>& mMonitoring)
+{
+  TaskInterface::mMonitoring = mMonitoring;
+}
 
 } // namespace o2::quality_control::core

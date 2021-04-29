@@ -160,8 +160,8 @@ BOOST_AUTO_TEST_CASE(qc_factory_standalone_test)
   std::string configFilePath = std::string("json://") + getTestDataDirectory() + "testSharedConfig.json";
   auto workflow = InfrastructureGenerator::generateStandaloneInfrastructure(configFilePath);
 
-  // the infrastructure should consist of 3 TaskRunners, 1 PostProcessingRunner, 4 CheckRunners (including one for PP)
-  BOOST_REQUIRE_EQUAL(workflow.size(), 8);
+  // the infrastructure should consist of 3 TaskRunners, 1 PostProcessingRunner, 4 CheckRunners (including one for PP), 1 AggregatorRunner
+  BOOST_REQUIRE_EQUAL(workflow.size(), 9);
 
   auto taskRunnerSkeleton = std::find_if(
     workflow.begin(), workflow.end(),

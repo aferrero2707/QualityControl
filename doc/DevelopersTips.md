@@ -4,6 +4,14 @@ This is a resource meant for the developers of the QC. Whenever we learn somethi
 here. It is not sanitized or organized. Just a brain dump.
 
 ### Release procedure / check list
+
+One can use the script `release.sh` : 
+```shell
+release.sh
+```
+It is able to work out what is the release number and will drive the user through all the steps. 
+
+Alternatively do it manually:
 1. Update the version number in [CMakeLists.txt](../CMakeLists.txt), commit and push
 2. Release in JIRA
 2. Prepare the release notes using the commits since the last release in github (see [this template](ReleaseNotesTemplate.md)).
@@ -12,11 +20,18 @@ here. It is not sanitized or organized. Just a brain dump.
 5. Once merged, send an email to alice-o2-wp7@cern.ch, alice-o2-qc-contact@cern.ch and alice-dpg-qa-tools@cern.ch to announce the new release. Use the email for the previous release as a template.
 
 ### Create a fix version
+
+One can use the script `createPatch.sh` : 
+```shell
+createPatch.sh v1.9.1 # current version
+```
+
+Alternatively do it manually:
 1. checkout last tagged version, e.g. `git checkout v0.26.1`
 2. branch, e.g. `git checkout -b branch_v0.26.2`
 2. cherry-pick the commit from master, e.g. `git cherry-pick b187ddbe52058d53a9bbf3cbdd53121c6b936cd8`
-2. push the branch upstream, e.g. `git push upstream -u branch_v0.26.2`
 3. change version in CMakeLists and commit
+2. push the branch upstream, e.g. `git push upstream -u branch_v0.26.2`
 5. tag, e.g. `git tag -a v0.26.2 -m "v0.26.2"`
 4. push the tag upstream, e.g. `git push upstream v0.26.2`
 6. Release in github using this tag 
@@ -102,6 +117,8 @@ We use the infologger. There is a utility class, `QcInfoLogger`, that can be use
 
 Related issues : https://alice.its.cern.ch/jira/browse/QC-224
 
+To have the full details of what is sent to the logs, do `export INFOLOGGER_MODE=raw`.
+
 ### Service Discovery (Online mode)
 
 Service discovery (Online mode) is used to list currently published objects by running QC tasks and checkers. It uses Consul to store:
@@ -153,7 +170,7 @@ When working on the ansible recipes and deploying with o2-flp-setup, the recipes
 ### Test with STFBuilder
 https://alice.its.cern.ch/jira/browse/O2-169
 ```
-readout.exe file:///afs/cern.ch/user/b/bvonhall/dev/alice/sw/slc7_x86-64/DataDistribution/latest/config/readout_emu.cfg
+o2-o2-readout-exe file:///afs/cern.ch/user/b/bvonhall/dev/alice/sw/slc7_x86-64/DataDistribution/latest/config/readout_emu.cfg
  
 StfBuilder \
 	--id stf_builder-0 \
@@ -174,3 +191,30 @@ o2-dpl-raw-proxy \
       -b \
       --session default
 ```
+
+
+### How to connect to one of the builder nodes used in GH PRs 
+
+Install aurora. 
+https://alisw.github.io/infrastructure-aurora
+The only one that worked for me was the precompiled macos binary. 
+
+Don't forget to install the CERN CA (see the troubleshooting at the bottom).
+* `scp lxplus.cern.ch:/etc/ssl/certs/ca-bundle.crt ca-bundle.crt`
+* `export REQUESTS_CA_BUNDLE=$PWD/ca-bundle.crt`
+* `aurora task ssh -l root build/mesosci/prod/ci_alisw_slc8-gpu-builder_latest/1`
+
+You might also have to ask Costin to install your public key if it a node prepared by him. 
+
+Then 
+* `docker ps` to see what is running
+* `docker exec -it id /bin/bash` to enter the environment "id"
+* `cd /mnt/mesos/sandbox/sandbox/`
+* `cd [check-name]`
+* `WORK_DIR=$PWD/sw source sw/slc7_x86-64/QualityControl/latest/etc/profile.d/init.sh `
+* `cd sw/BUILD/QualityControl-latest/QualityControl/tests/`
+* run the test
+
+
+The problem is that builds continuously happen in the machine. So you cannot just do `cd sw/BUILD/O2-latest/O2/` and `make`
+

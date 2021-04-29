@@ -18,6 +18,7 @@
 
 #include <InfoLogger/InfoLogger.hxx>
 #include <InfoLogger/InfoLoggerMacros.hxx>
+#include <boost/property_tree/ptree_fwd.hpp>
 
 typedef AliceO2::InfoLogger::InfoLogger infologger; // not to have to type the full stuff each time
 typedef AliceO2::InfoLogger::InfoLoggerContext infoContext;
@@ -50,6 +51,14 @@ class QcInfoLogger : public AliceO2::InfoLogger::InfoLogger
   }
 
   void setFacility(const std::string& facility);
+  void setDetector(const std::string& detector);
+  void init(const std::string& facility,
+            bool discardDebug = false,
+            int discardFromLevel = 21 /* Discard Trace */,
+            AliceO2::InfoLogger::InfoLoggerContext* dplContext = nullptr);
+  void init(const std::string& facility,
+            const boost::property_tree::ptree& config,
+            AliceO2::InfoLogger::InfoLoggerContext* dplContext = nullptr);
 
  private:
   QcInfoLogger();
@@ -58,6 +67,10 @@ class QcInfoLogger : public AliceO2::InfoLogger::InfoLogger
   // Disallow copying
   QcInfoLogger& operator=(const QcInfoLogger&) = delete;
   QcInfoLogger(const QcInfoLogger&) = delete;
+
+  // remember the contexts
+  std::shared_ptr<AliceO2::InfoLogger::InfoLoggerContext> mContext = nullptr;
+  AliceO2::InfoLogger::InfoLoggerContext* mDplContext = nullptr;
 };
 
 } // namespace o2::quality_control::core

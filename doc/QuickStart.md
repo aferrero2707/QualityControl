@@ -1,20 +1,19 @@
 # QuickStart
 
 <!--TOC generated with https://github.com/ekalinin/github-markdown-toc-->
-<!--./gh-md-toc --insert /path/to/README.md-->
+<!--./gh-md-toc --no-backup --hide-footer /path/to/README.md-->
 <!--ts-->
-   * [QuickStart](#quickstart)
-      * [Requirements](#requirements)
-      * [Setup](#setup)
-         * [Environment loading](#environment-loading)
-      * [Execution](#execution)
-         * [Basic workflow](#basic-workflow)
-         * [Readout chain](#readout-chain)
-            * [Getting real data from readout](#getting-real-data-from-readout)
-            * [Readout data format as received by the Task](#readout-data-format-as-received-by-the-task)
-         * [Post-processing example](#post-processing-example)
-<!-- Added by: bvonhall, at:  -->
-
+* [QuickStart](#quickstart)
+   * [Read this first!](#read-this-first)
+   * [Requirements](#requirements)
+   * [Setup](#setup)
+      * [Environment loading](#environment-loading)
+   * [Execution](#execution)
+      * [Basic workflow](#basic-workflow)
+      * [Readout chain](#readout-chain)
+         * [Getting real data from readout](#getting-real-data-from-readout)
+         * [Readout data format as received by the Task](#readout-data-format-as-received-by-the-task)
+      * [Post-processing example](#post-processing-example)
 <!--te-->
 
 [↑ Go to the Table of Content ↑](../README.md) | [Continue to Modules Development →](ModulesDevelopment.md)
@@ -132,21 +131,24 @@ The first thing is to load the environment for the readout in a new terminal: `a
 Then enable the data sampling channel in readout by opening the readout config file located at `$READOUT_ROOT/etc/readout-qc.cfg` and make sure that the following properties are correct:
 
 ```
-# First make sure we never exit
-[readout]
-(...)
-exitTimeout=-1
-(...)
-# And enable the data sampling
-[consumer-data-sampling]
-consumerType=DataSampling
+# Enable the data sampling
+[consumer-fmq-qc]
+consumerType=FairMQChannel
+enableRawFormat=1
+fmq-name=readout-qc
+fmq-address=ipc:///tmp/readout-pipe-1
+fmq-type=pub
+fmq-transport=zeromq
+unmanagedMemorySize=2G
+memoryPoolNumberOfPages=500
+memoryPoolPageSize=1M
 enabled=1
 (...)
 ```
 
 Start Readout in a terminal:
 ```
-readout.exe file://$READOUT_ROOT/etc/readout-qc.cfg
+o2-readout-exe file://$READOUT_ROOT/etc/readout-qc.cfg
 ```
 
 Start in another terminal the proxy, DataSampling and QC workflows:

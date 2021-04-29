@@ -29,17 +29,13 @@
 #include <Framework/TimesliceIndex.h>
 #include <Framework/DataSpecUtils.h>
 #include <Framework/DataDescriptorQueryBuilder.h>
-#include <Framework/ConfigParamRegistry.h>
-#include "Framework/InputRecordWalker.h"
-
-// Fairlogger
-#include <fairlogger/Logger.h>
+#include <Framework/InputRecordWalker.h>
 
 #include "QualityControl/QcInfoLogger.h"
 #include "QualityControl/TaskFactory.h"
+#include "QualityControl/runnerUtils.h"
 
 #include <string>
-#include <memory>
 #include <TFile.h>
 
 using namespace std;
@@ -62,8 +58,6 @@ TaskRunner::TaskRunner(const std::string& taskName, const std::string& configura
     mRunNumber(0),
     mMonitorObjectsSpec({ "mo" }, createTaskDataOrigin(), createTaskDataDescription(taskName), id)
 {
-  ILOG_INST.setFacility("Task");
-
   // setup configuration
   try {
     mTaskConfig.taskName = taskName;
@@ -80,8 +74,15 @@ TaskRunner::TaskRunner(const std::string& taskName, const std::string& configura
 
 void TaskRunner::init(InitContext& iCtx)
 {
-  ILOG(Info, Support) << "initializing TaskRunner" << ENDM;
-  ILOG(Info, Support) << "Loading configuration" << ENDM;
+  AliceO2::InfoLogger::InfoLoggerContext* ilContext = nullptr;
+  try {
+    ilContext = &iCtx.services().get<AliceO2::InfoLogger::InfoLoggerContext>();
+  } catch (const RuntimeErrorRef& err) {
+    ILOG(Error) << "Could not find the DPL InfoLogger Context." << ENDM;
+  }
+  ILOG_INST.init("task/" + mTaskConfig.taskName, mConfigFile->getRecursive(), ilContext);
+
+  ILOG(Info, Support) << "Initializing TaskRunner" << ENDM;
   try {
     loadTaskConfig();
   } catch (...) {
@@ -92,12 +93,12 @@ void TaskRunner::init(InitContext& iCtx)
   }
 
   // registering state machine callbacks
-  iCtx.services().get<CallbackService>().set(CallbackService::Id::Start, [this, &options = iCtx.options()]() { start(options); });
+  iCtx.services().get<CallbackService>().set(CallbackService::Id::Start, [this, &services = iCtx.services()]() { start(services); });
   iCtx.services().get<CallbackService>().set(CallbackService::Id::Stop, [this]() { stop(); });
   iCtx.services().get<CallbackService>().set(CallbackService::Id::Reset, [this]() { reset(); });
 
   // setup monitoring
-  std::string monitoringUrl = mConfigFile->get<std::string>("qc.config.monitoring.url", "infologger:///debug?qc");
+  auto monitoringUrl = mConfigFile->get<std::string>("qc.config.monitoring.url", "infologger:///debug?qc");
   mCollector = MonitoringFactory::Get(monitoringUrl);
   mCollector->enableProcessMonitoring();
   mCollector->addGlobalTag(tags::Key::Subsystem, tags::Value::QC);
@@ -109,6 +110,7 @@ void TaskRunner::init(InitContext& iCtx)
   // setup user's task
   TaskFactory f;
   mTask.reset(f.create(mTaskConfig, mObjectsManager));
+  mTask->setMonitoring(mCollector);
 
   // init user's task
   mTask->loadCcdb(mTaskConfig.conditionUrl);
@@ -174,16 +176,16 @@ CompletionPolicy::CompletionOp TaskRunner::completionPolicyCallback(o2::framewor
     }
   }
 
-  //  ILOG(Debug, Trace) << "Completion policy callback. "
-  //                     << "Total inputs possible: " << inputs.size()
-  //                     << ", data inputs: " << dataInputsPresent
-  //                     << ", timer inputs: " << (action == CompletionPolicy::CompletionOp::Consume) << ENDM;
+  ILOG(Debug, Trace) << "Completion policy callback. "
+                     << "Total inputs possible: " << inputs.size()
+                     << ", data inputs: " << dataInputsPresent
+                     << ", timer inputs: " << (action == CompletionPolicy::CompletionOp::Consume) << ENDM;
 
   if (dataInputsPresent == dataInputsExpected) {
     action = CompletionPolicy::CompletionOp::Consume;
   }
 
-  //  ILOG(Debug, Trace) << "Action: " << action << ENDM;
+  ILOG(Debug, Trace) << "Action: " << action << ENDM;
 
   return action;
 }
@@ -217,46 +219,60 @@ void TaskRunner::endOfStream(framework::EndOfStreamContext& eosContext)
   mNoMoreCycles = true;
 }
 
-void TaskRunner::start(const ConfigParamRegistry& options)
+void TaskRunner::start(const ServiceRegistry& services)
 {
+  o2::quality_control::core::computeRunNumber(services, mConfigFile->getRecursive());
+
   try {
-    mRunNumber = stoi(options.get<std::string>("runNumber"));
-    ILOG(Info, Support) << "Run number found in options: " << mRunNumber << ENDM;
-  } catch (std::invalid_argument& ia) {
-    ILOG(Info, Support) << "Run number not found in options, using 0 instead." << ENDM;
-    mRunNumber = 0;
+    startOfActivity();
+
+    if (mNoMoreCycles) {
+      ILOG(Info, Support) << "The maximum number of cycles (" << mTaskConfig.maxNumberCycles << ") has been reached"
+                          << " or the device has received an EndOfStream signal. Won't start a new cycle." << ENDM;
+      return;
+    }
+
+    startCycle();
+  } catch (...) {
+    // we catch here because we don't know where it will go in DPL's CallbackService
+    ILOG(Error, Support) << "Error caught in start() :\n"
+                         << current_diagnostic(true) << ENDM;
+    throw;
   }
-  ILOG(Info, Ops) << "Starting run " << mRunNumber << ENDM;
-
-  startOfActivity();
-
-  if (mNoMoreCycles) {
-    ILOG(Info, Support) << "The maximum number of cycles (" << mTaskConfig.maxNumberCycles << ") has been reached"
-                        << " or the device has received an EndOfStream signal. Won't start a new cycle." << ENDM;
-    return;
-  }
-
-  startCycle();
 }
 
 void TaskRunner::stop()
 {
-  if (mCycleOn) {
-    mTask->endOfCycle();
-    mCycleNumber++;
-    mCycleOn = false;
+  try {
+    if (mCycleOn) {
+      mTask->endOfCycle();
+      mCycleNumber++;
+      mCycleOn = false;
+    }
+    endOfActivity();
+    mTask->reset();
+    mRunNumber = 0;
+  } catch (...) {
+    // we catch here because we don't know where it will go in DPL's CallbackService
+    ILOG(Error, Support) << "Error caught in stop() :\n"
+                         << current_diagnostic(true) << ENDM;
+    throw;
   }
-  endOfActivity();
-  mTask->reset();
-  mRunNumber = 0;
 }
 
 void TaskRunner::reset()
 {
-  mTask.reset();
-  mCollector.reset();
-  mObjectsManager.reset();
-  mRunNumber = 0;
+  try {
+    mTask.reset();
+    mCollector.reset();
+    mObjectsManager.reset();
+    mRunNumber = 0;
+  } catch (...) {
+    // we catch here because we don't know where it will go in DPL's CallbackService
+    ILOG(Error, Support) << "Error caught in reset() :\n"
+                         << current_diagnostic(true) << ENDM;
+    throw;
+  }
 }
 
 std::tuple<bool /*data ready*/, bool /*timer ready*/> TaskRunner::validateInputs(const framework::InputRecord& inputs)
@@ -307,6 +323,7 @@ void TaskRunner::loadTopologyConfig()
   // needed to avoid having looping at the maximum speed
   mTaskConfig.cycleDurationSeconds = taskConfigTree.get<int>("cycleDurationSeconds", 10);
   mOptions.push_back({ "period-timer-cycle", framework::VariantType::Int, static_cast<int>(mTaskConfig.cycleDurationSeconds * 1000000), { "timer period" } });
+  mOptions.push_back({ "runNumber", framework::VariantType::String, { "Run number" } });
 }
 
 boost::property_tree::ptree TaskRunner::getTaskConfigTree() const
@@ -322,13 +339,16 @@ boost::property_tree::ptree TaskRunner::getTaskConfigTree() const
 
 void TaskRunner::loadTaskConfig()
 {
+  ILOG(Info, Support) << "Loading configuration" << ENDM;
+
   auto taskConfigTree = getTaskConfigTree();
   string test = taskConfigTree.get<std::string>("detectorName", "MISC");
   mTaskConfig.detectorName = validateDetectorName(taskConfigTree.get<std::string>("detectorName", "MISC"));
+  ILOG_INST.setDetector(mTaskConfig.detectorName);
   mTaskConfig.moduleName = taskConfigTree.get<std::string>("moduleName");
   mTaskConfig.className = taskConfigTree.get<std::string>("className");
   mTaskConfig.maxNumberCycles = taskConfigTree.get<int>("maxNumberCycles", -1);
-  mTaskConfig.consulUrl = mConfigFile->get<std::string>("qc.config.consul.url", "http://consul-test.cern.ch:8500");
+  mTaskConfig.consulUrl = mConfigFile->get<std::string>("qc.config.consul.url", "");
   mTaskConfig.conditionUrl = mConfigFile->get<std::string>("qc.config.conditionDB.url", "http://ccdb-test.cern.ch:8080");
   mTaskConfig.saveToFile = taskConfigTree.get<std::string>("saveObjectsToFile", "");
   try {
@@ -377,12 +397,14 @@ void TaskRunner::startOfActivity()
   mTimerTotalDurationActivity.reset();
   mTotalNumberObjectsPublished = 0;
 
-  // We take the run number as set from the FairMQ options if it is there, otherwise the one from the config file
-  int run = mRunNumber > 0 ? mRunNumber : mConfigFile->get<int>("qc.config.Activity.number");
-  Activity activity(run,
+  // Start activity in module's stask and update objectsManager
+  Activity activity(mRunNumber,
                     mConfigFile->get<int>("qc.config.Activity.type"));
+  ILOG(Info, Ops) << "Starting run " << mRunNumber << ENDM;
+  mCollector->setRunNumber(mRunNumber);
   mTask->startOfActivity(activity);
   mObjectsManager->updateServiceDiscovery();
+  mObjectsManager->updateRunNumber(mRunNumber);
 }
 
 void TaskRunner::endOfActivity()

@@ -16,7 +16,7 @@
         "url": "infologger:///debug?qc"
       },
       "consul": {
-        "url": "http://consul-test.cern.ch:8500"
+        "url": ""
       },
       "conditionDB": {
         "url": "ccdb-test.cern.ch:8080"
@@ -42,7 +42,8 @@
           "localnode2"
         ],
         "remoteMachine": "qcnode1",
-        "remotePort": "30132"
+        "remotePort": "30132",
+        "mergingMode": "delta"
       },
       "MultiNodeRemote": {
         "active": "true",

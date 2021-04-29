@@ -24,6 +24,8 @@
 #include <DPLUtils/DPLRawParser.h>
 #include <DetectorsRaw/RDHUtils.h>
 #include <Framework/InputRecord.h>
+#include <Framework/InputRecordWalker.h>
+#include <Headers/DataHeaderHelpers.h>
 
 using namespace std;
 using namespace o2::raw;
@@ -130,10 +132,10 @@ void DaqTask::endOfActivity(Activity& /*activity*/)
   ILOG(Info, Support) << "endOfActivity" << ENDM;
 
   for (const auto& system : mSystems) {
-    if (!getObjectsManager()->isBeingPublished(mSubSystemsTotalSizes[system.first]->GetName())) {
+    if (getObjectsManager()->isBeingPublished(mSubSystemsTotalSizes[system.first]->GetName())) {
       getObjectsManager()->stopPublishing(mSubSystemsTotalSizes[system.first]);
     }
-    if (!getObjectsManager()->isBeingPublished(mSubSystemsRdhSizes[system.first]->GetName())) {
+    if (getObjectsManager()->isBeingPublished(mSubSystemsRdhSizes[system.first]->GetName())) {
       getObjectsManager()->stopPublishing(mSubSystemsRdhSizes[system.first]);
     }
   }
@@ -194,7 +196,7 @@ void DaqTask::printInputPayload(const header::DataHeader* header, const char* pa
 void DaqTask::monitorInputRecord(InputRecord& inputRecord)
 {
   uint32_t totalPayloadSize = 0;
-  for (auto&& input : inputRecord) {
+  for (const auto& input : InputRecordWalker(inputRecord)) {
     if (input.header != nullptr) {
       const auto* header = o2::header::get<header::DataHeader*>(input.header);
       const char* payload = input.payload;
@@ -206,7 +208,7 @@ void DaqTask::monitorInputRecord(InputRecord& inputRecord)
 
       // printing
       if (mCustomParameters.count("printInputHeader") > 0 && mCustomParameters["printInputHeader"] == "true") {
-        header->print();
+        std::cout << fmt::format("{}", *header) << std::endl;
       }
       if (mCustomParameters.count("printInputPayload") > 0) {
         printInputPayload(header, payload);

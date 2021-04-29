@@ -61,19 +61,21 @@ class ITSFhrTask final : public TaskInterface
  private:
   int mAverageProcessTime = 0;
   void setAxisTitle(TH1* object, const char* xTitle, const char* yTitle);
-  void createGeneralPlots(int barrel); //create General PLots for IB/OB/ALL (1/2/3)
+  void createGeneralPlots(); //create General Plots depend mLayer which define by json file
   void createErrorTriggerPlots();
   void createOccupancyPlots();
   void setPlotsFormat();
   void getEnableLayers();
   void resetGeneralPlots();
   void resetOccupancyPlots();
+  void resetObject(TH1* obj);
   //detector information
   static constexpr int NCols = 1024; //column number in Alpide chip
   static constexpr int NRows = 512;  //row number in Alpide chip
   static constexpr int NLayer = 7;   //layer number in ITS detector
   static constexpr int NLayerIB = 3;
 
+  static constexpr int NSubStave2[NLayer] = { 1, 1, 1, 2, 2, 2, 2 };
   const int NSubStave[NLayer] = { 1, 1, 1, 2, 2, 2, 2 };
   const int NStaves[NLayer] = { 12, 16, 20, 24, 30, 42, 48 };
   const int nHicPerStave[NLayer] = { 1, 1, 1, 8, 8, 14, 14 };
@@ -85,10 +87,8 @@ class ITSFhrTask final : public TaskInterface
   std::array<bool, NLayer> mEnableLayers = { false };
 
   int mNThreads = 0;
-  std::vector<std::pair<int, int>> mHitPixelID[7][48][14][14];              //layer, stave, hic, chip
   std::unordered_map<unsigned int, int> mHitPixelID_Hash[7][48][2][14][14]; //layer, stave, substave, hic, chip
 
-  std::vector<int> mPixelHitNumber[7][48][14][14]; //hit number correspond mHitPixelID
   o2::itsmft::RawPixelDecoder<o2::itsmft::ChipMappingITS>* mDecoder;
   ChipPixelData* mChipDataBuffer = nullptr;
   std::vector<ChipPixelData> mChipsBuffer;
@@ -101,6 +101,12 @@ class ITSFhrTask final : public TaskInterface
   unsigned int mErrors[19] = { 0 };
   static constexpr int NTrigger = 13;
   int16_t partID = 0;
+  int mLayer;
+
+  std::unordered_map<unsigned int, int>*** mHitPixelID_InStave /* = new std::unordered_map<unsigned int, int>**[NStaves[lay]]*/;
+  int** mHitnumber /* = new int*[NStaves[lay]]*/;       //IB : hitnumber[stave][chip]; OB : hitnumber[stave][hic]
+  double** mOccupancy /* = new double*[NStaves[lay]]*/; //IB : occupancy[stave][chip]; OB : occupancy[stave][hic]
+  int*** mErrorCount /* = new int**[NStaves[lay]]*/;    //IB : errorcount[stave][FEE][errorid]
 
   TString mTriggerType[NTrigger] = { "ORBIT", "HB", "HBr", "HC", "PHYSICS", "PP", "CAL", "SOT", "EOT", "SOC", "EOC", "TF", "INT" };
 
@@ -119,7 +125,6 @@ class ITSFhrTask final : public TaskInterface
 
   //Occupancy and hit-map
   THnSparseI* mStaveHitmap[7][48];
-  TH2I* mHitmapTmp;
   TH2D* mChipStaveOccupancy[7];
   TH2I* mChipStaveEventHitCheck[7];
   TH1D* mOccupancyPlot[7];
@@ -129,6 +134,7 @@ class ITSFhrTask final : public TaskInterface
 
   //Geometry decoder
   o2::its::GeometryTGeo* mGeom;
+  std::string mGeomPath;
 };
 } // namespace o2::quality_control_modules::its
 

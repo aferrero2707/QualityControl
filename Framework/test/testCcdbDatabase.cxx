@@ -25,11 +25,9 @@
 
 #include <boost/test/unit_test.hpp>
 #include <TH1F.h>
-#include "rapidjson/document.h"
 #include "QualityControl/RepoPathUtils.h"
 #include "QualityControl/testUtils.h"
-//#include "rapidjson/writer.h"
-//#include "rapidjson/stringbuffer.h"
+#include <TROOT.h>
 
 namespace utf = boost::unit_test;
 
@@ -42,7 +40,6 @@ namespace
 using namespace o2::quality_control::core;
 using namespace o2::quality_control::repository;
 using namespace std;
-using namespace rapidjson;
 
 const std::string CCDB_ENDPOINT = "ccdb-test.cern.ch:8080";
 
@@ -138,9 +135,9 @@ BOOST_AUTO_TEST_CASE(ccdb_store_for_future_tests)
   TH1F* h1 = new TH1F("to_be_kept", "asdf", 100, 0, 99);
   h1->FillRandom("gaus", 12345);
   shared_ptr<MonitorObject> mo1 = make_shared<MonitorObject>(h1, "task", "TST_KEEP");
-  mo1->addMetadata("Run", o2::quality_control::core::Version::GetQcVersion().getString());
+  mo1->addMetadata("RunNumber", o2::quality_control::core::Version::GetQcVersion().getString());
   shared_ptr<QualityObject> qo1 = make_shared<QualityObject>(Quality::Bad, "check", "TST_KEEP", "OnAll", vector{ string("input1"), string("input2") });
-  qo1->addMetadata("Run", o2::quality_control::core::Version::GetQcVersion().getString());
+  qo1->addMetadata("RunNumber", o2::quality_control::core::Version::GetQcVersion().getString());
 
   f.backend->storeMO(mo1);
   f.backend->storeQO(qo1);
@@ -175,62 +172,6 @@ BOOST_AUTO_TEST_CASE(ccdb_retrieve_inexisting_mo)
   BOOST_CHECK(mo == nullptr);
 }
 
-//BOOST_AUTO_TEST_CASE(ccdb_retrieve_data_024)
-//{
-//  // test whether we can read data from version 0.24
-//  test_fixture f;
-//  map<string, string> filter = { { "qc_version", "0.24.0" } };
-//  long timestamp = CcdbDatabase::getFutureTimestamp(60 * 60 * 24 * 365 * 5); // target 5 years in the future as we store with validity of 10 years
-//
-//  auto* mo = dynamic_cast<MonitorObject*>(f.backend->retrieveTObject("qc/TST_KEEP/task/to_be_kept", filter, timestamp));
-//  BOOST_CHECK_NE(mo, nullptr);
-//  BOOST_CHECK_EQUAL(mo->getName(), "to_be_kept");
-//  BOOST_CHECK_EQUAL(dynamic_cast<TH1F*>(mo->getObject())->GetEntries(), 12345);
-//
-//  auto* qo = dynamic_cast<QualityObject*>(f.backend->retrieveTObject("qc/checks/TST_KEEP/check", filter, timestamp));
-//  BOOST_CHECK_NE(qo, nullptr);
-//  BOOST_CHECK_EQUAL(qo->getName(), "check");
-//  BOOST_CHECK_EQUAL(qo->getQuality(), o2::quality_control::core::Quality::Bad);
-//
-//  auto jsonMO = f.backend->retrieveJson("qc/TST_KEEP/task/to_be_kept", timestamp, filter);
-//  BOOST_CHECK(!jsonMO.empty());
-//
-//  auto jsonQO = f.backend->retrieveJson("qc/checks/TST_KEEP/check", timestamp, filter);
-//  BOOST_CHECK(!jsonQO.empty());
-//}
-//
-//BOOST_AUTO_TEST_CASE(ccdb_retrieve_data_026)
-//{
-//  // test whether we can read data from version 0.26
-//  test_fixture f;
-//  map<string, string> filter = { { "qc_version", "0.26.0" } };
-//  long timestamp = CcdbDatabase::getFutureTimestamp(60 * 60 * 24 * 365 * 5); // target 5 years in the future as we store with validity of 10 years
-//
-//  auto* tobj = f.backend->retrieveTObject("qc/TST_KEEP/task/to_be_kept", filter, timestamp);
-//  BOOST_CHECK_NE(tobj, nullptr);
-//  BOOST_CHECK_EQUAL(tobj->GetName(), "to_be_kept");
-//  BOOST_CHECK_EQUAL(dynamic_cast<TH1F*>(tobj)->GetEntries(), 12345);
-//
-//  std::map<std::string, std::string> headers;
-//  auto* qo = dynamic_cast<QualityObject*>(f.backend->retrieveTObject("qc/checks/TST_KEEP/check", filter, timestamp, &headers));
-//  BOOST_CHECK_NE(qo, nullptr);
-//  BOOST_CHECK_EQUAL(qo->getName(), "check");
-//  BOOST_CHECK_EQUAL(qo->getQuality(), o2::quality_control::core::Quality::Bad);
-//  BOOST_CHECK(headers.count("Valid-From") > 0);
-//  string validityQO = headers["Valid-From"];
-//
-//  auto qo2 = f.backend->retrieveQO("qc/checks/TST_KEEP/check", std::stol(validityQO));
-//  string run = qo2->getMetadata("Run");
-//  cout << "Run : " << run << endl;
-//  BOOST_CHECK(run == "0.26.0");
-//
-//  auto jsonMO = f.backend->retrieveJson("qc/TST_KEEP/task/to_be_kept", timestamp, filter);
-//  BOOST_CHECK(!jsonMO.empty());
-//
-//  auto jsonQO = f.backend->retrieveJson("qc/checks/TST_KEEP/check", timestamp, filter);
-//  BOOST_CHECK(!jsonQO.empty());
-//}
-
 BOOST_AUTO_TEST_CASE(ccdb_retrieve_qo, *utf::depends_on("ccdb_store"))
 {
   test_fixture f;
@@ -240,53 +181,94 @@ BOOST_AUTO_TEST_CASE(ccdb_retrieve_qo, *utf::depends_on("ccdb_store"))
   BOOST_CHECK_EQUAL(q.getLevel(), 3);
 }
 
-/**
- * Compares the two provided json string. They must be identical at the exception of
- * the metadata "Date" that can differ. This is due to the way CCDB sets this property.
- * @param ccdbObjectJson1
- * @param ccdbObjectJson2
- * @return
- */
-bool areIdentical(std::string ccdbObjectJson1, std::string ccdbObjectJson2)
+unique_ptr<CcdbDatabase> backendGlobal = std::make_unique<CcdbDatabase>();
+
+void askObject(std::string objectPath)
 {
-  Document jsonDocumentA;
-  Document jsonDocumentB;
-  jsonDocumentA.Parse(ccdbObjectJson1.c_str());
-  jsonDocumentB.Parse(ccdbObjectJson2.c_str());
-  jsonDocumentA["metadata"].RemoveMember("Date");
-  jsonDocumentB["metadata"].RemoveMember("Date");
-  return jsonDocumentA == jsonDocumentB;
+  cout << "in askObject" << endl;
+  map<string, string> metadata;
+  map<string, string> headers;
+  auto json = backendGlobal->retrieveJson(objectPath, -1, metadata);
+  cout << "object " << json.substr(10) << endl;
+  BOOST_CHECK(!json.empty());
+  cout << "finished " << endl;
 }
 
-BOOST_AUTO_TEST_CASE(ccdb_retrieve_json, *utf::depends_on("ccdb_store"))
+BOOST_AUTO_TEST_CASE(ccdb_test_thread, *utf::depends_on("ccdb_store"))
 {
-  test_fixture f;
+  ROOT::EnableThreadSafety();
+  string pid = std::to_string(getpid());
+  string taskName = "Test/pid" + pid;
+  string objectPath = RepoPathUtils::getMoPath("TST", taskName, "quarantine");
+  backendGlobal->connect(CCDB_ENDPOINT, "", "", "");
+  int iterations = 10;
+  vector<std::thread> threads;
 
-  std::string object = "quarantine";
-  std::string path = f.getMoPath(object);
-  std::cout << "[json retrieve]: " << path << std::endl;
-  auto json = f.backend->retrieveJson(path, -1, f.metadata);
-  auto json2 = f.backend->retrieveMOJson(f.getMoFolder(object), object);
-  BOOST_CHECK(!json.empty());
-  BOOST_CHECK(!json2.empty());
-  BOOST_CHECK(areIdentical(json, json2));
+  for (int i = 0; i < iterations; i++) {
+    cout << "Asking for object, iteration " << i << endl;
+    threads.emplace_back(askObject, objectPath);
+  }
 
-  std::string checkName = "test-ccdb-check";
-  string qualityPath = f.getQoPath(checkName);
-  std::cout << "[json retrieve]: " << qualityPath << std::endl;
-  auto json3 = f.backend->retrieveJson(qualityPath, -1, f.metadata);
-  auto json4 = f.backend->retrieveQOJson(qualityPath);
-  BOOST_CHECK(!json3.empty());
-  BOOST_CHECK(areIdentical(json3, json4));
+  for (std::thread& t : threads) {
+    t.join();
+  }
+  threads.clear();
+}
 
-  Document jsonDocument;
-  jsonDocument.Parse(json.c_str());
-  BOOST_CHECK(jsonDocument["_typename"].IsString());
-  BOOST_CHECK_EQUAL(jsonDocument["_typename"].GetString(), "TH1F");
-  BOOST_CHECK(jsonDocument.FindMember("metadata") != jsonDocument.MemberEnd());
-  const Value& metadataNode = jsonDocument["metadata"];
-  BOOST_CHECK(metadataNode.IsObject());
-  BOOST_CHECK(metadataNode.FindMember("qc_task_name") != jsonDocument.MemberEnd());
+unique_ptr<o2::ccdb::CcdbApi> apiGlobal = std::make_unique<o2::ccdb::CcdbApi>();
+
+void askObjectApi(std::string objectPath)
+{
+  cout << "in askObject" << endl;
+  map<string, string> metadata;
+  map<string, string> headers;
+
+  auto* object = apiGlobal->retrieveFromTFileAny<TObject>(objectPath, metadata, -1, &headers);
+  BOOST_CHECK(object != nullptr);
+  cout << "finished " << endl;
+}
+
+BOOST_AUTO_TEST_CASE(ccdb_test_thread_api, *utf::depends_on("ccdb_store"))
+{
+  ROOT::EnableThreadSafety();
+  string pid = std::to_string(getpid());
+  string taskName = "Test/pid" + pid;
+  string objectPath = RepoPathUtils::getMoPath("TST", taskName, "quarantine");
+  cout << "objectPath: " << objectPath << endl;
+  apiGlobal->init(CCDB_ENDPOINT);
+  int iterations = 10;
+  vector<std::thread> threads;
+
+  for (int i = 0; i < iterations; i++) {
+    cout << "Asking for object, iteration " << i << endl;
+    threads.emplace_back(askObjectApi, objectPath);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
+  for (std::thread& t : threads) {
+    t.join();
+  }
+  threads.clear();
+}
+
+BOOST_AUTO_TEST_CASE(ccdb_test_no_thread_api)
+{
+  unique_ptr<o2::ccdb::CcdbApi> api = std::make_unique<o2::ccdb::CcdbApi>();
+  string ccdbUrl = "http://ccdb-test.cern.ch:8080";
+  api->init(ccdbUrl);
+  cout << "ccdb url: " << ccdbUrl << endl;
+  bool hostReachable = api->isHostReachable();
+  cout << "Is host reachable ? --> " << hostReachable << endl;
+  string objectPath = "qc/DAQ/MO/daqTask/UNKNOWN/sumRdhSizesPerInputRecord";
+  int iterations = 3;
+  map<string, string> metadata;
+  map<string, string> headers;
+
+  for (int i = 0; i < iterations; i++) {
+    cout << "Asking for object, iteration " << i << endl;
+    auto* object = api->retrieveFromTFileAny<TObject>(objectPath, metadata);
+    cout << "object : " << object << endl;
+  }
 }
 
 BOOST_AUTO_TEST_CASE(ccdb_metadata, *utf::depends_on("ccdb_store"))
@@ -330,6 +312,25 @@ BOOST_AUTO_TEST_CASE(ccdb_metadata, *utf::depends_on("ccdb_store"))
   BOOST_CHECK_EQUAL(obj3->getMetadataMap().count("my_meta"), 0);
   BOOST_CHECK_EQUAL(obj4->getMetadataMap().count("my_meta"), 1);
   BOOST_CHECK_EQUAL(obj4->getMetadataMap().at("my_meta"), "is_good");
+}
+
+BOOST_AUTO_TEST_CASE(ccdb_store_retrieve_any)
+{
+  test_fixture f;
+
+  std::map<std::string, std::string> meta;
+  TH1F* h1 = new TH1F("quarantine", "asdf", 100, 0, 99);
+  h1->FillRandom("gaus", 10000);
+
+  f.backend->storeAny(h1, typeid(TH1F), f.getMoPath("storeAny"), meta, "TST", "testStoreAny");
+
+  meta.clear();
+  void* rawResult = f.backend->retrieveAny(typeid(TH1F), f.getMoPath("storeAny"), meta);
+  auto h1_back = static_cast<TH1F*>(rawResult);
+  BOOST_CHECK(rawResult != nullptr);
+  BOOST_CHECK(h1_back != nullptr);
+  BOOST_CHECK(h1_back->GetNbinsX() == 100);
+  BOOST_CHECK(h1_back->GetEntries() > 0);
 }
 
 } // namespace

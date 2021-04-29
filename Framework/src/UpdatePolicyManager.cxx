@@ -39,7 +39,7 @@ void UpdatePolicyManager::updateGlobalRevision()
 void UpdatePolicyManager::updateActorRevision(const std::string& actorName, RevisionType revision)
 {
   if (mPoliciesByActor.count(actorName) == 0) {
-    ILOG(Error) << "Cannot update revision for " << actorName << " : object not found" << ENDM;
+    ILOG(Error, Support) << "Cannot update revision for " << actorName << " : object not found" << ENDM;
     BOOST_THROW_EXCEPTION(ObjectNotFoundError() << errinfo_object_name(actorName));
   }
   mPoliciesByActor.at(actorName).revision = revision;
@@ -69,8 +69,7 @@ void UpdatePolicyManager::addPolicy(std::string actorName, std::string policyTyp
      */
     policy = [&, actorName]() {
       for (const auto& objectName : mPoliciesByActor.at(actorName).inputObjects) {
-        if (mObjectsRevision[objectName] <= mPoliciesByActor.at(actorName).revision) {
-          // Expect: mObjectsRevision[notExistingKey] == 0
+        if (mObjectsRevision.count(objectName) == 0 || mObjectsRevision.at(objectName) <= mPoliciesByActor.at(actorName).revision) {
           return false;
         }
       }
@@ -147,20 +146,35 @@ void UpdatePolicyManager::addPolicy(std::string actorName, std::string policyTyp
       return false;
     };
   } else {
-    ILOG(Fatal) << "No policy named '" << policyType << "'" << ENDM;
+    ILOG(Fatal, Ops) << "No policy named '" << policyType << "'" << ENDM;
     BOOST_THROW_EXCEPTION(FatalException() << errinfo_details("No policy named '" + policyType + "'"));
   }
 
   mPoliciesByActor[actorName] = { actorName, policy, objectNames, allObjects, policyHelper };
+
+  ILOG(Info, Devel) << "Added a policy : " << mPoliciesByActor[actorName] << ENDM;
 }
 
 bool UpdatePolicyManager::isReady(const std::string& actorName)
 {
   if (mPoliciesByActor.count(actorName) == 0) {
-    ILOG(Error) << "Cannot check if " << actorName << " is ready : object not found" << ENDM;
+    ILOG(Error, Support) << "Cannot check if " << actorName << " is ready : object not found" << ENDM;
     BOOST_THROW_EXCEPTION(ObjectNotFoundError() << errinfo_object_name(actorName));
   }
   return mPoliciesByActor.at(actorName).isReady();
+}
+
+std::ostream& operator<<(std::ostream& out, const UpdatePolicy& updatePolicy) // output
+{
+  out << "actorName: " << updatePolicy.actorName
+      << "; allInputObjects: " << updatePolicy.allInputObjects
+      << "; policyHelperFlag: " << updatePolicy.policyHelperFlag
+      << "; revision: " << updatePolicy.revision
+      << "; inputObjects: ";
+  for (const auto& item : updatePolicy.inputObjects) {
+    out << item << ", ";
+  }
+  return out;
 }
 
 } // namespace o2::quality_control::checker
