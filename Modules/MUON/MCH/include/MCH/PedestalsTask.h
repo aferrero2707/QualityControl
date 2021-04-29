@@ -7,11 +7,10 @@
 #define QC_MODULE_MUONCHAMBERS_PEDESTALSTASK_H
 
 #include "QualityControl/TaskInterface.h"
-#include "MCH/Mapping.h"
-#include "MCH/Decoding.h"
-#include "MCHBase/Digit.h"
+#include "MCHRawElecMap/Mapper.h"
 #include "MCH/GlobalHistogram.h"
 #include "Framework/DataRef.h"
+#include "MCHCalibration/MCHChannelCalibrator.h"
 
 class TH1F;
 class TH2F;
@@ -47,21 +46,25 @@ class PedestalsTask final : public TaskInterface
   void reset() override;
 
  private:
-  Decoder mDecoder;
-  uint64_t nhits[MCH_NCRU][24][40][64];
-  double pedestal[MCH_NCRU][24][40][64];
-  double noise[MCH_NCRU][24][40][64];
+  struct PadCoordinates
+  {
+    double padX;
+    double padSizeX;
+    double padY;
+    double padSizeY;
+    int padId;
+    int cathode;
+    int density;
+  };
+  o2::mch::raw::Solar2FeeLinkMapper mSolar2FeeLinkMapper;
+  o2::mch::raw::Elec2DetMapper mElec2DetMapper;
 
-  int64_t bxc[MCH_NCRU][24][40][64];
-  double bxcMean[MCH_NCRU][24];
+  /// helper class that performs the actual computation of the pedestals from the input digits
+  o2::mch::calibration::PedestalProcessor mPedestalProcessor;
 
-  //Matrices [de][padid], stated an upper value for de# and padid#
+  //int64_t bxc[MCH_NCRU][24][40][64];
+  double bxcMean;
 
-  uint64_t nhitsDigits[1100][1500];
-  double pedestalDigits[1100][1500];
-  double noiseDigits[1100][1500];
-
-  MapCRU mMapCRU[MCH_NCRU];
   TH2F* mHistogramPedestals;
   TH2F* mHistogramNoise;
   TH2F* mHistogramBunchCrossing;
@@ -69,23 +72,60 @@ class PedestalsTask final : public TaskInterface
   std::vector<int> DEs;
   //MapFEC mMapFEC;
   std::map<int, TH2F*> mHistogramPedestalsDE;
+  std::map<int, TH2F*> mHistogramPedMinDE;
+  std::map<int, TH2F*> mHistogramPedMaxDE;
   std::map<int, TH2F*> mHistogramNoiseDE;
-  std::map<int, TH1F*> mHistogramDeltaDE[2];
+  std::map<int, TH1F*> mHistogramDeltaDE[5][2];
   std::map<int, TH2F*> mHistogramPedestalsXY[2];
   std::map<int, TH2F*> mHistogramNoiseXY[2];
+  std::map<int, TH2F*> mHistogramPedMinXY[2];
+  std::map<int, TH2F*> mHistogramPedMaxXY[2];
+  std::map<int, TH2F*> mHistogramDeltaXY[2];
   std::map<int, TH2F*> mHistogramDsIDXY[2];
 
   std::map<int, TH1F*> mHistogramNoiseDistributionDE[5][2];
+
+  GlobalHistogram* mHistogramPedestalsMCH;
+  GlobalHistogram* mHistogramNoiseMCH;
 
   // mFlipDE[DE][0] -> horizontal flipping
   // mFlipDE[DE][1] -> vertical flipping
   bool mFlipDE[MCH_MAX_DE][2];
 
-  GlobalHistogram* mHistogramPedestalsMCH;
-  GlobalHistogram* mHistogramNoiseMCH;
-
   int mPrintLevel;
 
+  bool getDeMapping(uint16_t solarID, uint8_t dsID, int& deId, int& dsIddet);
+  bool getPadMapping(uint16_t solarID, uint8_t dsID, uint8_t channel, int& deId, int& dsIddet, PadCoordinates& coords);
+  bool getFeeMapping(uint16_t solarID, int& feeId, int& linkId);
+  int getFeeBin(int feeId, int linkId, int dsId)
+  {
+    return (feeId * 12 * 40 + (linkId % 12) * 40 + dsId + 1);
+  }
+  int getPadDensity(float padSizeX, float padSizeY)
+  {
+    float szmax = padSizeX;
+    if (szmax < padSizeY) {
+      szmax = padSizeY;
+    }
+
+    int szid = 0;
+    if (fabs(szmax - 2.5) < 0.001) {
+      szid = 1;
+    } else if (fabs(szmax - 5.0) < 0.001) {
+      szid = 2;
+    } else if (fabs(szmax - 10.0) < 0.001) {
+      szid = 3;
+    }
+
+    return szid;
+  }
+
+  void monitorDataDigits(o2::framework::ProcessingContext& ctx);
+  void monitorDataPedestals(o2::framework::ProcessingContext& ctx);
+
+  void PlotBunchCrossingAndDeltas(uint16_t solarID, uint8_t dsID, uint8_t channel, uint32_t bxc, int16_t pedMin, int16_t pedMax);
+  void PlotPedestal(uint16_t solarID, uint8_t dsID, uint8_t channel, double mean, double rms);
+  void PlotPedestalDE(uint16_t solarID, uint8_t dsID, uint8_t channel, double mean, double rms);
   void fill_noise_distributions();
   void save_histograms();
 };
