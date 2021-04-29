@@ -163,8 +163,7 @@ static void CoG(gsl::span<const o2::mch::Digit> precluster, double& Xcog, double
   int detid = precluster[0].getDetID();
   const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(detid);
 
-  for (ssize_t i = 0; i < precluster.size(); ++i) {
-    const o2::mch::Digit& digit = precluster[i];
+  for (const o2::mch::Digit& digit : precluster) {
     int padid = digit.getPadID();
 
     // position and size of current pad
@@ -247,8 +246,7 @@ bool PhysicsTaskPreclusters::plotPrecluster(const o2::mch::PreCluster& preCluste
   int detid = preClusterDigits[0].getDetID();
   const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(detid);
 
-  for (ssize_t i = 0; i < preClusterDigits.size(); ++i) {
-    const o2::mch::Digit& digit = preClusterDigits[i];
+  for (const o2::mch::Digit& digit : preClusterDigits) {
     int padid = digit.getPadID();
 
     // cathode index
@@ -329,8 +327,7 @@ void PhysicsTaskPreclusters::printPreclusters(gsl::span<const o2::mch::PreCluste
     int detid = preClusterDigits[0].getDetID();
     const o2::mch::mapping::Segmentation& segment = o2::mch::mapping::segmentation(detid);
 
-    for (ssize_t i = 0; i < preClusterDigits.size(); ++i) {
-      const o2::mch::Digit& digit = preClusterDigits[i];
+    for (const o2::mch::Digit& digit : preClusterDigits) {
       int padid = digit.getPadID();
 
       // cathode index
@@ -351,8 +348,8 @@ void PhysicsTaskPreclusters::printPreclusters(gsl::span<const o2::mch::PreCluste
       float X = segment.padPositionX(d.getPadID());
       float Y = segment.padPositionY(d.getPadID());
       bool bend = !segment.isBendingPad(d.getPadID());
-      QcInfoLogger::GetInstance() << fmt::format("  DE {:4d}  PAD {:5d}  ADC {:6d}  TIME ({} {} {:4d})",
-                                                 d.getDetID(), d.getPadID(), d.getADC(), d.getTime().orbit, d.getTime().bunchCrossing, d.getTime().sampaTime)
+      QcInfoLogger::GetInstance() << fmt::format("  DE {:4d}  PAD {:5d}  ADC {:6d}  TIME (XXX)",
+                                                 d.getDetID(), d.getPadID(), d.getADC())
                                   << "\n"
                                   << fmt::format("  CATHODE {}  PAD_XY {:+2.2f} , {:+2.2f}", (int)bend, X, Y) << AliceO2::InfoLogger::InfoLogger::endm;
     }
