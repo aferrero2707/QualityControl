@@ -60,6 +60,7 @@ class PhysicsTaskPreclusters /*final*/ : public o2::quality_control::core::TaskI
 
   bool plotPrecluster(const o2::mch::PreCluster& preCluster, gsl::span<const o2::mch::Digit> digits);
   void printPreclusters(gsl::span<const o2::mch::PreCluster> preClusters, gsl::span<const o2::mch::Digit> digits);
+  void printPrecluster(const o2::mch::PreCluster& preCluster, gsl::span<const o2::mch::Digit> digits);
 
  private:
   double MeanPseudoeffDE[1100];
@@ -77,13 +78,16 @@ class PhysicsTaskPreclusters /*final*/ : public o2::quality_control::core::TaskI
   TH1F* mMeanPseudoeffPerDECycle;
 
   std::map<int, TH1F*> mHistogramClchgDE;
+  std::map<int, TH1F*> mHistogramClchgBDE;
+  std::map<int, TH1F*> mHistogramClchgNBDE;
   std::map<int, TH1F*> mHistogramClchgDEOnCycle;
   std::map<int, TH1F*> mHistogramClsizeDE;
 
-  std::map<int, TH2F*> mHistogramPreclustersXY[4];
-  std::map<int, TH2F*> mHistogramPseudoeffXY[3];
+  std::map<int, TH2F*> mHistogramPreclustersDenXY[2];
+  std::map<int, TH2F*> mHistogramPreclustersNumXY[2];
+  std::map<int, TH2F*> mHistogramPseudoeffXY[2];
 
-  GlobalHistogram* mHistogramPseudoeff[3];
+  GlobalHistogram* mHistogramPseudoeff[2];
 };
 
 } // namespace muonchambers
