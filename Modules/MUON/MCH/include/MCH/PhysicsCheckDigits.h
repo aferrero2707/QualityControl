@@ -10,16 +10,18 @@
 // or submit itself to any jurisdiction.
 
 ///
-/// \file   PhysicsCheck.h
+/// \file   PhysicsCheckDigits.h
 /// \author Andrea Ferrero, Sebastien Perrin
 ///
 
-#ifndef QC_MODULE_MCH_PHYSICSCHECK_H
-#define QC_MODULE_MCH_PHYSICSCHECK_H
+#ifndef QC_MODULE_MCH_PHYSICSCHECKDIGITS_H
+#define QC_MODULE_MCH_PHYSICSCHECKDIGITS_H
 
 #include "QualityControl/CheckInterface.h"
 #include "QualityControl/MonitorObject.h"
 #include "QualityControl/Quality.h"
+#include "MCHRawCommon/DataFormats.h"
+#include "MCHRawElecMap/Mapper.h"
 #include <string>
 
 namespace o2::quality_control_modules::muonchambers
@@ -28,13 +30,13 @@ namespace o2::quality_control_modules::muonchambers
 /// \brief  Check if the occupancy on each pad is between the two specified values
 ///
 /// \author Andrea Ferrero, Sebastien Perrin
-class PhysicsCheck : public o2::quality_control::checker::CheckInterface
+class PhysicsCheckDigits : public o2::quality_control::checker::CheckInterface
 {
  public:
   /// Default constructor
-  PhysicsCheck();
+  PhysicsCheckDigits();
   /// Destructor
-  ~PhysicsCheck() override;
+  ~PhysicsCheckDigits() override;
 
   // Override interface
   void configure(std::string name) override;
@@ -43,12 +45,20 @@ class PhysicsCheck : public o2::quality_control::checker::CheckInterface
   std::string getAcceptedType() override;
 
  private:
+  bool checkPadMapping(uint16_t feeId, uint8_t linkId, uint8_t eLinkId, o2::mch::raw::DualSampaChannelId channel);
+
   int mPrintLevel;
   double minOccupancy;
   double maxOccupancy;
-  ClassDefOverride(PhysicsCheck, 1);
+
+  o2::mch::raw::Elec2DetMapper mElec2DetMapper;
+  o2::mch::raw::Det2ElecMapper mDet2ElecMapper;
+  o2::mch::raw::FeeLink2SolarMapper mFeeLink2SolarMapper;
+  o2::mch::raw::Solar2FeeLinkMapper mSolar2FeeLinkMapper;
+
+  ClassDefOverride(PhysicsCheckDigits, 1);
 };
 
 } // namespace o2::quality_control_modules::muonchambers
 
-#endif // QC_MODULE_TOF_TOFCHECKRAWSTIME_H
+#endif // QC_MODULE_MCH_PHYSICSCHECKDIGITS_H
