@@ -25,6 +25,7 @@
 #include <algorithm>
 
 #include "Mergers/MergeInterface.h"
+#include "MCH/GlobalHistogram.h"
 #include "MCHRawElecMap/Mapper.h"
 #ifdef HAVE_DIGIT_IN_DATAFORMATS
 #include "DataFormatsMCH/Digit.h"
@@ -43,7 +44,7 @@ class MergeableTH1PseudoEfficiencyPerDE : public TH1F, public o2::mergers::Merge
   MergeableTH1PseudoEfficiencyPerDE() = default;
 
   MergeableTH1PseudoEfficiencyPerDE(MergeableTH1PseudoEfficiencyPerDE const& copymerge)
-    : TH1F("DefaultName", "DefaultTitle", 1100, -0.5, 1099.5), o2::mergers::MergeInterface()
+    : TH1F("DefaultName", "DefaultTitle", getDEindexMax() + 1, 0, getDEindexMax() + 1), o2::mergers::MergeInterface()
   {
     Bool_t bStatus = TH1::AddDirectoryStatus();
     TH1::AddDirectory(kFALSE);
@@ -53,12 +54,12 @@ class MergeableTH1PseudoEfficiencyPerDE : public TH1F, public o2::mergers::Merge
   }
 
   MergeableTH1PseudoEfficiencyPerDE(const char* name, const char* title)
-    : TH1F(name, title, 1100, -0.5, 1099.5), o2::mergers::MergeInterface()
+    : TH1F(name, title, getDEindexMax() + 1, 0, getDEindexMax() + 1), o2::mergers::MergeInterface()
   {
     Bool_t bStatus = TH1::AddDirectoryStatus();
     TH1::AddDirectory(kFALSE);
-    mHistoNum = new TH1F("num", "num", 1100, -0.5, 1099.5);
-    mHistoDen = new TH1F("den", "den", 1100, -0.5, 1099.5);
+    mHistoNum = new TH1F("num", "num", getDEindexMax() + 1, 0, getDEindexMax() + 1);
+    mHistoDen = new TH1F("den", "den", getDEindexMax() + 1, 0, getDEindexMax() + 1);
     TH1::AddDirectory(bStatus);
     update();
   }
@@ -131,8 +132,8 @@ class MergeableTH1PseudoEfficiencyPerDE : public TH1F, public o2::mergers::Merge
     }
 
     for (auto i : o2::mch::raw::deIdsForAllMCH) {
-      mHistoNum->SetBinContent(i + 1, numDE[i]);
-      mHistoDen->SetBinContent(i + 1, denDE[i]);
+      mHistoNum->SetBinContent(getDEindex(i) + 1, numDE[i]);
+      mHistoDen->SetBinContent(getDEindex(i) + 1, denDE[i]);
     }
 
     update();
@@ -148,4 +149,4 @@ class MergeableTH1PseudoEfficiencyPerDE : public TH1F, public o2::mergers::Merge
 
 } // namespace o2::quality_control_modules::muonchambers
 
-#endif //O2_MERGEABLETH1PSEUDOEFFICIENCYPERDE_H
+#endif // O2_MERGEABLETH1PSEUDOEFFICIENCYPERDE_H
