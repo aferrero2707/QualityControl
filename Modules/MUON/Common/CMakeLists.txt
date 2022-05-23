@@ -4,10 +4,12 @@ set(MODULE_NAME "O2QcMUONCommon")
 
 set(SRCS
   src/MergeableTH2Ratio.cxx
+  src/MCHMIDTask.cxx
 )
 
 set(HEADERS
   include/MUONCommon/MergeableTH2Ratio.h
+  include/MUONCommon/MCHMIDTask.h
 )
 
 # ---- Library ----
@@ -20,7 +22,7 @@ target_include_directories(
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(${MODULE_NAME} PUBLIC O2QualityControl)
+target_link_libraries(${MODULE_NAME} PUBLIC O2QualityControl O2::MIDRaw O2::MIDQC O2::MCHBase O2::DataFormatsMCH $<TARGET_NAME_IF_EXISTS:O2::MCHMappingFactory> O2::MCHMappingImpl4 O2::MCHMappingSegContour O2::MCHRawDecoder O2::MCHPreClustering)
 
 # Digit.h is moving from MCHBase to DataFormatsMCH : let's handle both
 # gracefully for the moment...
@@ -39,7 +41,7 @@ install(
 # ---- ROOT dictionary ----
 
 add_root_dictionary(${MODULE_NAME}
-                    HEADERS include/MUONCommon/MergeableTH2Ratio.h
+                    HEADERS include/MUONCommon/MergeableTH2Ratio.h include/MUONCommon/MCHMIDTask.h
                     LINKDEF include/MUONCommon/LinkDef.h)
 
 # ---- Tests ----
