@@ -1,0 +1,114 @@
+{
+  "qc": {
+    "config": {
+      "database": {
+        "implementation": "CCDB",
+        "host": "http://ccdb-test.cern.ch:8080",
+        "username": "not_applicable",
+        "password": "not_applicable",
+        "name": "not_applicable"
+      },
+      "Activity": {
+        "number": "42",
+        "type": "2"
+      }
+    },
+    "tasks": {
+      "TaskMCHDigits": {
+        "active": "true",
+        "taskName": "Digits",
+        "className": "o2::quality_control_modules::muonchambers::DigitsTask",
+        "moduleName": "QcMuonChambers",
+        "detectorName": "MCH",
+        "cycleDurationSeconds": "300",
+        "maxNumberCycles": "-1",
+        "dataSource": {
+          "type": "direct",
+          "query": "digits:MCH/DIGITS",
+        },
+        "taskParameters" : {
+          "Diagnostic" : "false",
+        },
+        "location": "remote"
+      }
+    },
+    "postprocessing": {
+      "Digits": {
+        "active": "true",
+        "className": "o2::quality_control_modules::muonchambers::DigitsPostProcessing",
+        "moduleName": "QcMuonChambers",
+        "detectorName": "MCH",
+        "customization": [
+          {
+            "name": "FullHistos",
+            "value": "0"
+          },
+          {
+            "name": "ChannelRateMin",
+            "value": "0.00001"
+          },
+          {
+            "name": "ChannelRateMax",
+            "value": "10"
+          },
+          {
+            "name": "ReferenceTimeStamp",
+            "value": "1669672094149"
+          },
+          {
+            "name": "ReferenceDate",
+            "value": "2022/11/16 16:41:00"
+          }
+        ],
+        "dataSources": [
+          {
+            "type": "repository",
+            "path": "MCH/MO/Digits",
+            "names": [
+              "rate:Occupancy_Elec", "rate_signal:OccupancySignal_Elec", "orbits:DigitOrbitInTF", "orbits_signal:DigitSignalOrbitInTF"
+            ],
+            "reductorName": "o2::quality_control_modules::muonchambers::TH2ElecMapReductor",
+            "moduleName": "QcMuonChambers"
+          }
+        ],
+        "initTrigger": [
+          "userorcontrol"
+        ],
+        "updateTrigger": [
+          "300%sec"
+        ],
+        "stopTrigger": [
+          "userorcontrol"
+        ]
+      }
+    },
+    "checks": {
+      "MCHDigitsCheck": {
+        "active": "true",
+        "className": "o2::quality_control_modules::muonchambers::DigitsCheck",
+        "moduleName": "QcMuonChambers",
+        "detectorName": "MCH",
+        "policy": "OnAll",
+        "checkParameters": {
+          "MeanRateHistName": "RatesSignal/OnCycle/MeanRate",
+          "MeanRateRatioHistName": "RatesSignal/OnCycle/MeanRateRefRatio",
+          "BadChanFracHistName": "RatesSignal/OnCycle/BadChannelsFraction",
+          "MinRate": "0.01",
+          "MaxRate": "1",
+          "MaxRateDelta": "0.1",
+          "MinGoodFraction": "0.9",
+          "RatePlotScaleMin": "0.0001",
+          "RatePlotScaleMax": "10",
+          "Verbose": "false"
+        },
+        "dataSource": [
+          {
+            "type": "PostProcessing",
+            "name": "Digits",
+            "MOs" : "all"
+          }
+        ]
+      }
+    }
+  }
+}

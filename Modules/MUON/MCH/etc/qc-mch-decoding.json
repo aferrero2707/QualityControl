@@ -1,0 +1,53 @@
+{
+  "qc": {
+    "config": {
+      "database": {
+        "implementation": "CCDB",
+        "host": "http://ccdb-test.cern.ch:8080",
+        "username": "not_applicable",
+        "password": "not_applicable",
+        "name": "not_applicable"
+      },
+      "Activity": {
+        "number": "42",
+        "type": "2"
+      }
+    },
+    "tasks": {
+      "MCHDecoding": {
+        "active": "true",
+        "taskName": "Decoding",
+        "className": "o2::quality_control_modules::muonchambers::DecodingTask",
+        "moduleName": "QcMuonChambers",
+        "detectorName": "MCH",
+        "cycleDurationSeconds": "300",
+        "maxNumberCycles": "-1",
+        "dataSource": {
+          "type": "direct",
+          "query": "rawerrors:MCH/ERRORS;hbpackets:MCH/HBPACKETS"
+        },
+        "taskParameters" : {
+          "HBExpectedBc" : "456190"
+        },
+        "location": "remote"
+      }
+    },
+    "checks": {
+      "MCHDecodingCheck": {
+        "active": "true",
+        "className": "o2::quality_control_modules::muonchambers::DecodingCheck",
+        "moduleName": "QcMuonChambers",
+        "detectorName": "MCH",
+        "policy": "OnAny",
+        "checkParameters": {
+          "MaxErrorRate": "100"
+        },
+        "dataSource": [{
+          "type": "Task",
+          "name": "MCHDecoding",
+          "MOs" : ["DecodingErrors/DecodingErrorsPerFeeId", "DecodingErrors/DecodingErrorsPerDE", "DecodingErrors/DecodingErrorsPerChamber", "SyncErrors/SynchErrorsPerDE", "SyncErrors/SynchErrorsPerChamber"]
+        }]
+      }
+    }
+  }
+}

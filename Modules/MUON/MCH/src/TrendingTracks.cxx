@@ -44,7 +44,7 @@ using namespace o2::quality_control_modules::muonchambers;
 
 void TrendingTracks::configure(std::string name, const boost::property_tree::ptree& config)
 {
-  mConfig = TrendingConfigMCH(name, config);
+  mConfig = PostProcessingConfigMCH(name, config);
   for (int chamber = 0; chamber < 10; chamber++) {
     mConfig.plots.push_back({ fmt::format("Clusters_CH{}", chamber + 1),
                               fmt::format("Clusters CH{}", chamber + 1),

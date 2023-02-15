@@ -26,6 +26,7 @@
 #include "DPLUtils/DPLRawParser.h"
 #include "QualityControl/QcInfoLogger.h"
 #include "MCH/PedestalsTask.h"
+#include "MCH/Helpers.h"
 #include "DataFormatsMCH/DsChannelGroup.h"
 #include "MCHMappingInterface/Segmentation.h"
 #include "MCHMappingInterface/CathodeSegmentation.h"
@@ -292,7 +293,7 @@ void PedestalsTask::PlotPedestalDE(uint16_t solarID, uint8_t dsID, uint8_t chann
 
 void PedestalsTask::monitorDataPedestals(o2::framework::ProcessingContext& ctx)
 {
-  ILOG(Info, Support) << "Plotting pedestals" << ENDM;
+  ILOG(Debug, Devel) << "Plotting pedestals" << ENDM;
 
   auto pedestals = ctx.inputs().get<gsl::span<o2::mch::calibration::PedestalChannel>>("pedestals");
   for (auto& p : pedestals) {
@@ -339,7 +340,7 @@ void PedestalsTask::monitorData(o2::framework::ProcessingContext& ctx)
 
 void PedestalsTask::endOfCycle()
 {
-  ILOG(Info, Support) << "endOfCycle" << ENDM;
+  ILOG(Debug, Devel) << "endOfCycle" << ENDM;
 
   fill_noise_distributions();
 
@@ -353,7 +354,7 @@ void PedestalsTask::endOfCycle()
 void PedestalsTask::endOfActivity(Activity& /*activity*/)
 {
   printf("PedestalsTask::endOfActivity() called\n");
-  ILOG(Info, Support) << "endOfActivity" << ENDM;
+  ILOG(Debug, Devel) << "endOfActivity" << ENDM;
 
   fill_noise_distributions();
 }
@@ -362,7 +363,7 @@ void PedestalsTask::reset()
 {
   // clean all the monitor objects here
 
-  ILOG(Info, Support) << "Reseting the histogram" << ENDM;
+  ILOG(Debug, Devel) << "Reseting the histogram" << ENDM;
   mPedestalData.reset();
 }
 
