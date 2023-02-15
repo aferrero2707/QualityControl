@@ -24,10 +24,10 @@
         "maxNumberCycles": "-1",
         "dataSource": {
           "type": "direct",
-          "query": "digits:MCH/DIGITS",
+          "query": "digits:MCH/DIGITS"
         },
         "taskParameters" : {
-          "Diagnostic" : "false",
+          "Diagnostic" : "false"
         },
         "location": "remote"
       }
@@ -71,11 +71,13 @@
             "moduleName": "QcMuonChambers"
           }
         ],
+        "plots": [
+        ],
         "initTrigger": [
           "userorcontrol"
         ],
         "updateTrigger": [
-          "300%sec"
+          "300sec"
         ],
         "stopTrigger": [
           "userorcontrol"
