@@ -30,9 +30,9 @@ class PedestalsCheck : public o2::quality_control::checker::CheckInterface
 {
  public:
   /// Default constructor
-  PedestalsCheck();
+  PedestalsCheck() = default;
   /// Destructor
-  ~PedestalsCheck() override;
+  ~PedestalsCheck() override = default;
 
   // Override interface
   void configure() override;
@@ -41,33 +41,26 @@ class PedestalsCheck : public o2::quality_control::checker::CheckInterface
   std::string getAcceptedType() override;
 
  private:
-  /// check if a given electronics channel is associated with a detector pad
-  bool checkPadMapping(uint16_t feeId, uint8_t linkId, uint8_t eLinkId, o2::mch::raw::DualSampaChannelId channel, int& deId);
-
-  /// Minimum value for SAMPA pedestals
-  float mMinPedestal;
-  /// Maximum value for SAMPA pedestals
-  float mMaxPedestal;
-  /// Minimum fraction of good channels for "good" quality status
-  float mMinGoodFraction;
-  /// Minimum fraction of good channels in one DE for "good" quality status
-  float mMinGoodFractionPerDE;
+  /// Maximum number of bad detection elements for "good" quality status
+  int mMaxBadDE{3};
+  /// Maximum fraction of bad channels in one DE for "good" quality status
+  float mMaxBadFractionPerDE{0.1};
+  /// Maximum fraction of empty channels in one DE for "good" quality status
+  float mMaxEmptyFractionPerDE{0.1};
   /// Minimum value of the z-axis range for the pedestals plots
-  double mPedestalsPlotScaleMin;
+  double mPedestalsPlotScaleMin{40};
   /// Maximum value of the z-axis range for the pedestals plots
-  double mPedestalsPlotScaleMax;
+  double mPedestalsPlotScaleMax{250};
   /// Minimum value of the z-axis range for the noise plots
-  double mNoisePlotScaleMin;
+  double mNoisePlotScaleMin{0};
   /// Maximum value of the z-axis range for the noise plots
-  double mNoisePlotScaleMax;
+  double mNoisePlotScaleMax{1.5};
 
-  /// direct and inverse electronics and detector mappings
-  o2::mch::raw::Elec2DetMapper mElec2DetMapper;
-  o2::mch::raw::Det2ElecMapper mDet2ElecMapper;
-  o2::mch::raw::FeeLink2SolarMapper mFeeLink2SolarMapper;
-  o2::mch::raw::Solar2FeeLinkMapper mSolar2FeeLinkMapper;
+  Quality mQualityBadChannels;
+  Quality mQualityEmptyChannels;
+  std::vector<std::string> mErrorMessages;
 
-  ClassDefOverride(PedestalsCheck, 3);
+  ClassDefOverride(PedestalsCheck, 4);
 };
 
 } // namespace o2::quality_control_modules::muonchambers
