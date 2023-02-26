@@ -78,19 +78,19 @@ void PedestalsTask::initialize(o2::framework::InitContext& /*ctx*/)
   publishObject(mHistogramBadChannels.get(), "colz", false);
 
   // values averaged over detection elements
-  mHistogramStatDE = std::make_unique<TH1F>("StatisticsPerDE", "Statistics per DE", getDEindexMax() + 1, 0, getDEindexMax() + 1);
+  mHistogramStatDE = std::make_unique<TH1F>("StatisticsPerDE", "Statistics per DE", getNumDE(), 0, getNumDE());
   publishObject(mHistogramStatDE.get(), "", false);
 
-  mHistogramEmptyChannelsDE = std::make_unique<TH1F>("EmptyChannelsPerDE", "Empty Channels per DE", getDEindexMax() + 1, 0, getDEindexMax() + 1);
+  mHistogramEmptyChannelsDE = std::make_unique<TH1F>("EmptyChannelsPerDE", "Empty Channels per DE", getNumDE(), 0, getNumDE());
   publishObject(mHistogramEmptyChannelsDE.get(), "", false);
 
-  mHistogramPedestalsDE = std::make_unique<TH1F>("PedestalsPerDE", "Pedestals per DE", getDEindexMax() + 1, 0, getDEindexMax() + 1);
+  mHistogramPedestalsDE = std::make_unique<TH1F>("PedestalsPerDE", "Pedestals per DE", getNumDE(), 0, getNumDE());
   publishObject(mHistogramPedestalsDE.get(), "", false);
 
-  mHistogramNoiseDE = std::make_unique<TH1F>("NoisePerDE", "Noise per DE", getDEindexMax() + 1, 0, getDEindexMax() + 1);
+  mHistogramNoiseDE = std::make_unique<TH1F>("NoisePerDE", "Noise per DE", getNumDE(), 0, getNumDE());
   publishObject(mHistogramNoiseDE.get(), "", false);
 
-  mHistogramBadChannelsDE = std::make_unique<TH1F>("BadChannelsPerDE", "Bad Channels per DE", getDEindexMax() + 1, 0, getDEindexMax() + 1);
+  mHistogramBadChannelsDE = std::make_unique<TH1F>("BadChannelsPerDE", "Bad Channels per DE", getNumDE(), 0, getNumDE());
   publishObject(mHistogramBadChannelsDE.get(), "", false);
 
 
@@ -357,25 +357,25 @@ void PedestalsTask::processElecMaps()
     }
   }
 
-  std::vector<double> nPadsPerDE(getDEindexMax() + 1);
+  std::vector<double> nPadsPerDE(getNumDE());
   std::fill(nPadsPerDE.begin(), nPadsPerDE.end(), 0);
 
-  std::vector<double> nBadPerDE(getDEindexMax() + 1);
+  std::vector<double> nBadPerDE(getNumDE());
   std::fill(nBadPerDE.begin(), nBadPerDE.end(), 0);
 
-  std::vector<double> nEmptyPerDE(getDEindexMax() + 1);
+  std::vector<double> nEmptyPerDE(getNumDE());
   std::fill(nEmptyPerDE.begin(), nEmptyPerDE.end(), 0);
 
-  std::vector<double> nEntriesPerDE(getDEindexMax() + 1);
+  std::vector<double> nEntriesPerDE(getNumDE());
   std::fill(nEntriesPerDE.begin(), nEntriesPerDE.end(), 0);
 
-  std::vector<double> meanPedPerDE(getDEindexMax() + 1);
+  std::vector<double> meanPedPerDE(getNumDE());
   std::fill(meanPedPerDE.begin(), meanPedPerDE.end(), 0);
 
-  std::vector<double> meanNoisePerDE(getDEindexMax() + 1);
+  std::vector<double> meanNoisePerDE(getNumDE());
   std::fill(meanNoisePerDE.begin(), meanNoisePerDE.end(), 0);
 
-  std::vector<double> meanStatPerDE(getDEindexMax() + 1);
+  std::vector<double> meanStatPerDE(getNumDE());
   std::fill(meanStatPerDE.begin(), meanStatPerDE.end(), 0);
 
   //..............
@@ -497,7 +497,7 @@ void PedestalsTask::processElecMaps()
   }
 
   // update 1-D plots with quantities averaged over detection elements
-  for (int i = 0; i <= getDEindexMax(); i++) {
+  for (int i = 0; i < getNumDE(); i++) {
     mHistogramStatDE->SetBinContent(i + 1, meanStatPerDE[i]);
     mHistogramPedestalsDE->SetBinContent(i + 1, meanPedPerDE[i]);
     mHistogramNoiseDE->SetBinContent(i + 1, meanNoisePerDE[i]);

@@ -17,6 +17,7 @@
 #ifndef QC_MODULE_MCH_PEDESTALSCHECK_H
 #define QC_MODULE_MCH_PEDESTALSCHECK_H
 
+#include "MCH/Helpers.h"
 #include "QualityControl/CheckInterface.h"
 #include "QualityControl/MonitorObject.h"
 #include "QualityControl/Quality.h"
@@ -42,11 +43,14 @@ class PedestalsCheck : public o2::quality_control::checker::CheckInterface
 
  private:
   /// Maximum number of bad detection elements for "good" quality status
-  int mMaxBadDE{3};
+  int mMaxBadST12{1};
+  int mMaxBadST345{3};
   /// Maximum fraction of bad channels in one DE for "good" quality status
   float mMaxBadFractionPerDE{0.1};
   /// Maximum fraction of empty channels in one DE for "good" quality status
   float mMaxEmptyFractionPerDE{0.1};
+  /// Minimum statistics per DE for "good" quality status
+  float mMinStatisticsPerDE{1000};
   /// Minimum value of the z-axis range for the pedestals plots
   double mPedestalsPlotScaleMin{40};
   /// Maximum value of the z-axis range for the pedestals plots
@@ -58,7 +62,10 @@ class PedestalsCheck : public o2::quality_control::checker::CheckInterface
 
   Quality mQualityBadChannels;
   Quality mQualityEmptyChannels;
+  Quality mQualityStatistics;
   std::vector<std::string> mErrorMessages;
+
+  QualityChecker mQualityChecker;
 
   ClassDefOverride(PedestalsCheck, 4);
 };
