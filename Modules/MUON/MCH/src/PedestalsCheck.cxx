@@ -212,6 +212,7 @@ Quality PedestalsCheck::check(std::map<std::string, std::shared_ptr<MonitorObjec
   } else if (result == Quality::Null) {
     mErrorMessages.emplace_back("Quality: NULL\n");
   }
+  mErrorMessages.emplace_back("");
 
   if (resultTable == Quality::Bad) {
     mErrorMessages.emplace_back("Missing Bad Channels Table");
