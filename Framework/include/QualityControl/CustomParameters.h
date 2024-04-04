@@ -165,6 +165,32 @@ class CustomParameters
   std::string& operator[](const std::string& key);
 
   /**
+   * Return the value for the given key, runType and beamType.
+   * If no key is found for the runType and the Beamtype, the fallback is to substitute with "default", first for beamType then for runType.
+   * The `defaultValue` is returned if the key could not be found in any combination of the provided run and beam types with "default".
+   * @param key
+   * @param defaultValue
+   * @param runType
+   * @param beamType
+   * @return the value for the given key, runType and beamType. If it is not found, it returns defaultValue.
+   */
+  template <class T>
+  T get(const std::string& key, const T& defaultValue, const std::string& runType = "default", const std::string& beamType = "default") const;
+
+  /**
+   * Return the value for the given key and activity.
+   * If `fallbackNotExtended` is `true` and the key does not exist for the current activity, returns the value for beamType=default and runType=default.
+   * Otherwise returns the default value.
+   * @param key
+   * @param defaultValue
+   * @param activity
+   * @param fallbackNotExtended
+   * @return the value for the given key and activity. If it is not found, it returns the value for beamType=default and runType=default if `fallbackNotExtended=true`, or defaultValue otherwise.
+   */
+  template <class T>
+  T get(const std::string& key, const T& defaultValue, const Activity& activity, bool fallbackNotExtended = false) const;
+
+  /**
    * prints the CustomParameters
    */
   friend std::ostream& operator<<(std::ostream& out, const CustomParameters& customParameters);
@@ -178,6 +204,34 @@ class CustomParameters
  private:
   CustomParametersType mCustomParameters;
 };
+
+template <class T>
+T CustomParameters::get(const std::string& key, const T& defaultValue, const std::string& runType, const std::string& beamType) const
+{
+  T result = defaultValue;
+  auto parOpt = atOptional(key);
+  if (parOpt.has_value()) {
+    std::stringstream ss(parOpt.value());
+    ss >> result;
+  }
+  return result;
+}
+
+template <class T>
+T CustomParameters::get(const std::string& key, const T& defaultValue, const Activity& activity, bool fallbackNotExtended) const
+{
+  auto parOpt = atOptional(key, activity);
+  if (parOpt.has_value()) {
+    T result;
+    std::stringstream ss(parOpt.value());
+    ss >> result;
+    return result;
+  }
+  if (fallbackNotExtended) {
+    return get<T>(key, defaultValue);
+  }
+  return defaultValue;
+}
 
 } // namespace o2::quality_control::core
 

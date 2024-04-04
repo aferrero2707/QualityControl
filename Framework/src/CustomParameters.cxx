@@ -171,6 +171,68 @@ std::string& CustomParameters::operator[](const std::string& key)
   return mCustomParameters.at("default").at("default").at(key);
 }
 
+template <>
+std::string CustomParameters::get<std::string>(const std::string& key, const std::string& defaultValue, const std::string& runType, const std::string& beamType) const
+{
+  auto parOpt = atOptional(key);
+  if (parOpt.has_value()) {
+    return parOpt.value();
+  }
+  return defaultValue;
+}
+
+template <>
+std::string CustomParameters::get<std::string>(const std::string& key, const std::string& defaultValue, const Activity& activity, bool fallbackNotExtended) const
+{
+  auto parOpt = atOptional(key, activity);
+  if (parOpt.has_value()) {
+    return parOpt.value();
+  }
+  if (fallbackNotExtended) {
+    return get<std::string>(key, defaultValue);
+  }
+  return defaultValue;
+}
+
+template <>
+bool CustomParameters::get<bool>(const std::string& key, const bool& defaultValue, const std::string& runType, const std::string& beamType) const
+{
+  auto parOpt = atOptional(key);
+  if (parOpt.has_value()) {
+    std::string value = parOpt.value();
+    std::transform(value.begin(), value.end(), value.begin(), ::toupper);
+    if (value == "TRUE" || value == "YES" || value == "1") {
+      return true;
+    }
+    if (value == "FALSE" || value == "NO" || value == "0") {
+      return false;
+    }
+    throw std::invalid_argument(std::string("error parsing boolean configurable parameter: key=") + key + " value=" + value);
+  }
+  return defaultValue;
+}
+
+template <>
+bool CustomParameters::get<bool>(const std::string& key, const bool& defaultValue, const Activity& activity, bool fallbackNotExtended) const
+{
+  auto parOpt = atOptional(key, activity);
+  if (parOpt.has_value()) {
+    std::string value = parOpt.value();
+    std::transform(value.begin(), value.end(), value.begin(), ::toupper);
+    if (value == "TRUE" || value == "YES" || value == "1") {
+      return true;
+    }
+    if (value == "FALSE" || value == "NO" || value == "0") {
+      return false;
+    }
+    throw std::invalid_argument(std::string("error parsing boolean configurable parameter: key=") + key + " value=" + value);
+  }
+  if (fallbackNotExtended) {
+    return get<bool>(key, defaultValue);
+  }
+  return defaultValue;
+}
+
 void CustomParameters::populateCustomParameters(const boost::property_tree::ptree& tree)
 {
   for (const auto& [runtype, subTreeRunType] : tree) {
