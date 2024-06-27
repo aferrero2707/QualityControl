@@ -130,6 +130,8 @@ class TrackPlotter : public HistPlotter
   std::array<std::unique_ptr<TH2DRatio>, 3> mTrackEtaPt;       ///< Pt (Gev/c) vs. eta of the track
   std::array<std::unique_ptr<TH2DRatio>, 3> mTrackPhiPt;       ///< Pt (Gev/c) vs. phi (in degrees) of the track
 
+  std::unique_ptr<TH2DRatio> mTrackPosAtVertex; ///< MCH track poisiton at MFT exit
+  std::unique_ptr<TH2DRatio> mTrackPosAtAbsorber; ///< MCH track poisiton at MFT exit
   std::unique_ptr<TH2DRatio> mTrackPosAtMFT; ///< MCH track poisiton at MFT exit
   std::unique_ptr<TH2DRatio> mTrackPosAtMID; ///< MCH track poisiton at MID entrance
 

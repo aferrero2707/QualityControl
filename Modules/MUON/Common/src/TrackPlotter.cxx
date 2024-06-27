@@ -223,6 +223,8 @@ void TrackPlotter::createTrackHistos(int maxTracksPerTF, int etaBins, int phiBin
     mTrackDT = createHisto<TH1D>(TString::Format("%sTrackDT", mPath.c_str()), "MCH-MID time correlation;ns", 4000, -500, 500, false, true, "hist");
   }
 
+  mTrackPosAtVertex = createHisto<TH2DRatio>(TString::Format("%sTrackPosAtVertex", mPath.c_str()), "MCH Track position at vertex;X (cm);Y (cm)", 50, -250, 250, 50, -250, 250, false, false, "colz");
+  mTrackPosAtAbsorber = createHisto<TH2DRatio>(TString::Format("%sTrackPosAtAbsorber", mPath.c_str()), "MCH Track position at absorber exit;X (cm);Y (cm)", 50, -250, 250, 50, -250, 250, false, false, "colz");
   mTrackPosAtMFT = createHisto<TH2DRatio>(TString::Format("%sTrackPosAtMFT", mPath.c_str()), "MCH Track position at MFT exit;X (cm);Y (cm)", 100, -50, 50, 100, -50, 50, false, false, "colz");
   mTrackPosAtMID = createHisto<TH2DRatio>(TString::Format("%sTrackPosAtMID", mPath.c_str()), "MCH Track position at MID entrance;X (cm);Y (cm)", 80, -400, 400, 80, -400, 400, false, false, "colz");
 }
@@ -385,6 +387,18 @@ void TrackPlotter::fillTrackHistos(const MuonTrack& track)
   auto rAbs = track.getRAbs();
   Fill(mTrackRAbs[q], rAbs);
   Fill(mTrackRAbs[2], rAbs);
+
+  o2::mch::TrackParam trackParamAtVertex;
+  track.extrapToZMCH(trackParamAtVertex, 0);
+  double xVtx = trackParamAtVertex.getNonBendingCoor();
+  double yVtx = trackParamAtVertex.getBendingCoor();
+  Fill(mTrackPosAtVertex, xVtx, yVtx);
+
+  o2::mch::TrackParam trackParamAtAbs;
+  track.extrapToZMCH(trackParamAtAbs, o2::quality_control_modules::muon::MuonTrack::sAbsZEnd);
+  double xAbs = trackParamAtAbs.getNonBendingCoor();
+  double yAbs = trackParamAtAbs.getBendingCoor();
+  Fill(mTrackPosAtAbsorber, xAbs, yAbs);
 
   o2::mch::TrackParam trackParamAtMFT;
   float zMFT = sLastMFTPlaneZ;

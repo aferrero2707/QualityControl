@@ -25,6 +25,8 @@
 #include <MCHGeometryTransformer/Transformations.h>
 #include <ReconstructionDataFormats/TrackMCHMID.h>
 #include <ReconstructionDataFormats/GlobalFwdTrack.h>
+#include <DataFormatsZDC/RecEventFlat.h>
+#include <CommonConstants/LHCConstants.h>
 #include <gsl/span>
 
 #include <fstream>
@@ -64,6 +66,301 @@ GID::mask_t adaptSource(GID::mask_t src)
 void TracksTask::initialize(o2::framework::InitContext& /*ic*/)
 {
   ILOG(Debug, Devel) << "initialize TracksTask" << ENDM; // QcInfoLogger is used. FairMQ logs will go to there as well.
+
+  mBackgroundITS.clear();
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 108626425));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 108657381));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 108679092));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 108679092));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 108713194));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 108713194));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 108722471));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 108734899));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 108761049));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 108761049));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 108799971));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 108830949));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 108830949));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 108852658));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 108869515));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 108886778));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 108896055));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 109047915));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 109082036));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 109086490));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 109233912));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109255604));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 109255604));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 109303425));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 109303425));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109303442));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 109303442));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109329978));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 109351653));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(0, 109416763));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109472564));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109477005));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109498699));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109503540));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 109503540));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109525240));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 109525240));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109537642));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 109537642));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109542092));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 109559336));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109559349));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 109581028));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 109581028));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 109607195));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 109607195));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 109624427));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109628875));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 109628875));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109689510));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 109689510));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 109693965));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 109693965));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109715653));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 109715653));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 109732919));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 109732919));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 109737348));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 109742197));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 109824138));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 109824138));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109824151));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 109863101));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 109863101));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 109889224));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(0, 109910913));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109915773));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109932620));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 109932620));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109932621));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 109932633));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 109937443));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 109937443));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 109937452));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 109949872));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 109976003));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 109976003));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 110036659));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 110036659));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 110045927));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 110045927));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 110067636));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 110149568));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 110149568));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(0, 110210215));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 110241190));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 110241190));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 110253610));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(0, 110275303));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 110275303));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 110297009));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 110297009));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 110318708));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 110318708));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 110327980));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 110340408));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 110349678));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 110362087));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 110362097));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 110383778));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 110393056));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 110393074));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 110393074));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 110427188));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 110448867));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 110448867));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 110448879));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 110448879));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 110448883));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 110453322));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 110492269));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 110557368));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 110561792));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 110579059));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 110631714));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 110691981));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 110691981));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 110740212));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 110757062));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(0, 110796007));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 110843858));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 110908933));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 110913781));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 110913781));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 110952333));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 111000556));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 111022252));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111034684));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111039115));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 111039115));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 111056366));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 111060825));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 111060825));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 111121445));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(0, 111147609));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 111164837));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 111164860));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111164861));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 111164861));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111195817));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 111195817));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 111273318));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111277770));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111295036));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 111295036));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111304312));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 111342868));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111360098));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111364549));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111364561));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 111386253));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 111391072));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111391090));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 111391090));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111391097));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(0, 111407957));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 111407957));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 111429632));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 111446895));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 111468582));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111473053));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111490298));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 111490298));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111538129));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 111542946));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 111581527));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 111624926));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 111663850));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 111668292));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 111668294));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 111668294));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 111750648));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 111755085));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 111815725));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 111820186));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 111825000));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 111825000));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 111825009));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 111880809));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 111880809));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111885266));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 111902521));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111906959));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 111906959));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111924193));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 111924193));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 111955184));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 111972060));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 111972060));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 111976869));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 111976869));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 111976889));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 112010985));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 112015425));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112037123));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112037126));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 112037149));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 112037149));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112058838));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 112058838));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112063669));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 112063669));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112102209));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 112102209));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 112107040));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 112107041));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 112128744));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 112172128));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112227954));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 112227954));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112232411));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 112237216));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 112293028));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 112297494));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112379814));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 112379815));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 112379815));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112405962));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 112405962));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 112405962));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 112405962));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 112423219));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 112475892));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112497582));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 112514457));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112531688));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112536158));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112596771));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112601230));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112622914));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112649456));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 112649456));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112683552));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 112688005));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112736240));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 112774815));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112801318));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 112839880));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 112839880));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 112839885));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 112878819));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 112878819));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112900518));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 112900518));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 112909802));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112922212));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 112926657));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 112926657));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 112926658));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 112926658));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 112953186));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 112953214));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 112953214));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 112965625));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 113035146));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 113039986));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 113039986));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 113039989));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 113083381));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 113121922));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 113121922));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 113126758));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 113139193));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 113143635));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 113182562));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 113182562));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 113204271));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 113204271));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 113235240));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(0, 113256952));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 113273793));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 113291054));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 113291054));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 113291058));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(0, 113300338));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 113360586));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 113360586));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 113365430));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 113365430));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2376, 113377831));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 113377831));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 113377836));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 113377849));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(594, 113377849));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 113382300));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 113403972));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 113403978));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 113408801));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 113408803));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 113408805));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1782, 113430517));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(2970, 113452198));
+  mBackgroundITS.emplace_back(o2::InteractionRecord(1188, 113473915));
 
   ILOG(Info, Support) << "loading sources" << ENDM; // QcInfoLogger is used. FairMQ logs will go to there as well.
 
@@ -169,25 +466,138 @@ void TracksTask::createTrackHistos(const Activity& activity)
     [cutChi2Min, cutChi2Max](const MuonTrack& t) { return ((t.getChi2OverNDFMCH() >= cutChi2Min) && (t.getChi2OverNDFMCH() <= cutChi2Max)); }
   };
 
+  // ZDC background selection/rejection
+  std::vector<MuonCutFunc> zdcBdgSelection {
+    [&](const MuonTrack& t) {
+      auto muonIR = t.getIRMCH();
+
+      for (const auto& zdcIR : mBackgroundZDC) {
+        auto diffIR = muonIR.toLong() - zdcIR.toLong() - 31;
+        if (std::abs(diffIR) <= 5) {
+          std::cout << "[PIPPO] ZDC background found at " << zdcIR << " (" << muonIR << ")" << std::endl;
+          return true;
+        }
+      }
+      return false;
+    }
+  };
+
+  std::vector<MuonCutFunc> zdcBdgRejection {
+    [&](const MuonTrack& t) {
+      auto muonIR = t.getIRMCH();
+
+      for (const auto& zdcIR : mBackgroundZDC) {
+        auto diffIR = muonIR.toLong() - zdcIR.toLong() - 31;
+        if (std::abs(diffIR) <= 5) {
+          return false;
+        }
+      }
+      return true;
+    }
+  };
+
+  // ITS background selection/rejection
+  std::vector<MuonCutFunc> itsBdgSelection {
+    [&](const MuonTrack& t) {
+      auto muonIR = t.getIRMCH();
+
+      for (const auto& itsIR : mBackgroundITS) {
+        auto diffIR = muonIR.toLong() - itsIR.toLong();
+        if (diffIR >= 0 && diffIR <= 594) {
+          std::cout << "[PIPPO] ITS background found at " << itsIR << " (" << muonIR << ")" << std::endl;
+          return true;
+        }
+      }
+      return false;
+    }
+  };
+
+  std::vector<MuonCutFunc> itsBdgRejection {
+    [&](const MuonTrack& t) {
+      auto muonIR = t.getIRMCH();
+
+      for (const auto& itsIR : mBackgroundITS) {
+        auto diffIR = muonIR.toLong() - itsIR.toLong();
+        if (diffIR >= 0 && diffIR <= 594) {
+          std::cout << "[PIPPO] ITS background rejected " << std::endl;
+          return false;
+        }
+      }
+      return true;
+    }
+  };
+
+  std::vector<MuonCutFunc> bdgSelection{ zdcBdgSelection[0], itsBdgSelection[0] };
+  std::vector<MuonCutFunc> bdgRejection{ zdcBdgRejection[0], itsBdgRejection[0] };
+
+  std::vector<MuonCutFunc> zdcOnlyBdgSelection{ zdcBdgSelection[0], itsBdgRejection[0] };
+  std::vector<MuonCutFunc> itsOnlyBdgSelection{ zdcBdgRejection[0], itsBdgSelection[0] };
+
   std::vector<DiMuonCutFunc> diMuonCuts{
     // cut on time difference between the two muon tracks
     [diMuonTimeCut](const MuonTrack& t1, const MuonTrack& t2) { return (std::abs(t1.getTime().getTimeStamp() - t2.getTime().getTimeStamp()) < diMuonTimeCut); }
   };
 
-  auto createPlotterWithCuts = [&](GID::Source source, std::string path) {
+  auto createPlotterWithCuts = [&](GID::Source source, std::string path, std::vector<MuonCutFunc>& cuts) {
     if (mSrc[source] == 1) {
       ILOG(Info, Devel) << "Creating plotter for path " << path << ENDM;
       mTrackPlottersWithCuts[source] = std::make_unique<muon::TrackPlotter>(maxTracksPerTF, etaBins, phiBins, ptBins, source, path, fullHistos);
-      mTrackPlottersWithCuts[source]->setMuonCuts(muonCuts);
+      mTrackPlottersWithCuts[source]->setMuonCuts(cuts);
       mTrackPlottersWithCuts[source]->setDiMuonCuts(diMuonCuts);
       mTrackPlottersWithCuts[source]->publish(getObjectsManager());
     }
   };
 
-  createPlotterWithCuts(GID::Source::MCH, "WithCuts/");
-  createPlotterWithCuts(GID::Source::MCHMID, "MCH-MID/WithCuts/");
-  createPlotterWithCuts(GID::Source::MFTMCH, "MFT-MCH/WithCuts/");
-  createPlotterWithCuts(GID::Source::MFTMCHMID, "MFT-MCH-MID/WithCuts/");
+  createPlotterWithCuts(GID::Source::MCH, "WithCuts/", muonCuts);
+  createPlotterWithCuts(GID::Source::MCHMID, "MCH-MID/WithCuts/", muonCuts);
+  createPlotterWithCuts(GID::Source::MFTMCH, "MFT-MCH/WithCuts/", muonCuts);
+  createPlotterWithCuts(GID::Source::MFTMCHMID, "MFT-MCH-MID/WithCuts/", muonCuts);
+
+  mTrackPlottersBgdZDC[0] = std::make_unique<muon::TrackPlotter>(maxTracksPerTF, etaBins, phiBins, ptBins, GID::Source::MCH, "BgdZDC/", fullHistos);
+  mTrackPlottersBgdZDC[0]->setMuonCuts(zdcBdgSelection);
+  mTrackPlottersBgdZDC[0]->setDiMuonCuts(diMuonCuts);
+  mTrackPlottersBgdZDC[0]->publish(getObjectsManager());
+
+  mTrackPlottersBgdZDC[1] = std::make_unique<muon::TrackPlotter>(maxTracksPerTF, etaBins, phiBins, ptBins, GID::Source::MCH, "NoBgdZDC/", fullHistos);
+  mTrackPlottersBgdZDC[1]->setMuonCuts(zdcBdgRejection);
+  mTrackPlottersBgdZDC[1]->setDiMuonCuts(diMuonCuts);
+  mTrackPlottersBgdZDC[1]->publish(getObjectsManager());
+
+  mTrackPlottersBgdZDC[2] = std::make_unique<muon::TrackPlotter>(maxTracksPerTF, etaBins, phiBins, ptBins, GID::Source::MCH, "BgdITS/", fullHistos);
+  mTrackPlottersBgdZDC[2]->setMuonCuts(itsBdgSelection);
+  mTrackPlottersBgdZDC[2]->setDiMuonCuts(diMuonCuts);
+  mTrackPlottersBgdZDC[2]->publish(getObjectsManager());
+
+  mTrackPlottersBgdZDC[3] = std::make_unique<muon::TrackPlotter>(maxTracksPerTF, etaBins, phiBins, ptBins, GID::Source::MCH, "NoBgdITS/", fullHistos);
+  mTrackPlottersBgdZDC[3]->setMuonCuts(itsBdgRejection);
+  mTrackPlottersBgdZDC[3]->setDiMuonCuts(diMuonCuts);
+  mTrackPlottersBgdZDC[3]->publish(getObjectsManager());
+
+  mTrackPlottersBgdZDC[4] = std::make_unique<muon::TrackPlotter>(maxTracksPerTF, etaBins, phiBins, ptBins, GID::Source::MCH, "BgdITSZDC/", fullHistos);
+  mTrackPlottersBgdZDC[4]->setMuonCuts(bdgSelection);
+  mTrackPlottersBgdZDC[4]->setDiMuonCuts(diMuonCuts);
+  mTrackPlottersBgdZDC[4]->publish(getObjectsManager());
+
+  mTrackPlottersBgdZDC[5] = std::make_unique<muon::TrackPlotter>(maxTracksPerTF, etaBins, phiBins, ptBins, GID::Source::MCH, "NoBgdITSZDC/", fullHistos);
+  mTrackPlottersBgdZDC[5]->setMuonCuts(bdgRejection);
+  mTrackPlottersBgdZDC[5]->setDiMuonCuts(diMuonCuts);
+  mTrackPlottersBgdZDC[5]->publish(getObjectsManager());
+
+  mTrackPlottersBgdZDC[6] = std::make_unique<muon::TrackPlotter>(maxTracksPerTF, etaBins, phiBins, ptBins, GID::Source::MCH, "BgdZDC-NoBgdITS/", fullHistos);
+  mTrackPlottersBgdZDC[6]->setMuonCuts(zdcOnlyBdgSelection);
+  mTrackPlottersBgdZDC[6]->setDiMuonCuts(diMuonCuts);
+  mTrackPlottersBgdZDC[6]->publish(getObjectsManager());
+
+  mTrackPlottersBgdZDC[7] = std::make_unique<muon::TrackPlotter>(maxTracksPerTF, etaBins, phiBins, ptBins, GID::Source::MCH, "BgdITS-NoBgdZDC/", fullHistos);
+  mTrackPlottersBgdZDC[7]->setMuonCuts(itsOnlyBdgSelection);
+  mTrackPlottersBgdZDC[7]->setDiMuonCuts(diMuonCuts);
+  mTrackPlottersBgdZDC[7]->publish(getObjectsManager());
+
+  mBcZDC = std::make_unique<TH1F>("BcZDC", "BcZDC;bc", o2::constants::lhc::LHCMaxBunches, 0, o2::constants::lhc::LHCMaxBunches);
+  getObjectsManager()->startPublishing(mBcZDC.get());
+
+  mDCAvsBcZDC = std::make_unique<TH2F>("DCAvsBcZDC", "DCAvsBcZDC;bc;DCA (cm)", 200, -100, 100, 100, 0, 100);
+  getObjectsManager()->startPublishing(mDCAvsBcZDC.get());
 }
 
 void TracksTask::removeTrackHistos()
@@ -270,6 +680,37 @@ void TracksTask::monitorData(o2::framework::ProcessingContext& ctx)
 
   mRecoCont.collectData(ctx, *mDataRequest.get());
 
+  // ZDC data
+  auto bcrecZDC = ctx.inputs().get<gsl::span<o2::zdc::BCRecData>>("zdc-bcrec");
+  auto energyZDC = ctx.inputs().get<gsl::span<o2::zdc::ZDCEnergy>>("zdc-energyrec");
+  auto tdcZDC = ctx.inputs().get<gsl::span<o2::zdc::ZDCTDCData>>("zdc-tdcrec");
+  auto infoZDC = ctx.inputs().get<gsl::span<uint16_t>>("zdc-inforec");
+
+  o2::zdc::RecEventFlat ev;
+  ev.init(bcrecZDC, energyZDC, tdcZDC, infoZDC);
+
+  mBackgroundZDC.clear();
+  while (ev.next()) {
+    int32_t itdc = o2::zdc::TDCZNAC;
+    int nhit = ev.NtdcV(itdc);
+
+    for (int32_t ipos = 0; ipos < nhit; ipos++) {
+      double mytdc = o2::zdc::FTDCVal * ev.TDCVal[itdc][ipos];
+
+      if (mytdc > 5.7 && mytdc < 8.7) {
+        // Backgroud event found here!
+        std::cout << "[TOTO] ZDC background event found: " << ev.ir << std::endl;
+        mBackgroundZDC.emplace_back(ev.ir);
+        mBcZDC->Fill(ev.ir.bc);
+        for (const auto& itsIR : mBackgroundITS) {
+          if (itsIR.orbit == ev.ir.orbit) {
+            std::cout << "ITS+ZDC background event in same orbit: ZDC [" << ev.ir << "]  ITS [ " << itsIR << "]  BC difference: " << (ev.ir.toLong() - itsIR.toLong()) << std::endl;
+          }
+        }
+      }
+    }
+  }
+
   ILOG(Debug, Devel) << "Debug: Collected data" << ENDM;
 
   for (auto& p : mTrackPlotters) {
@@ -282,6 +723,11 @@ void TracksTask::monitorData(o2::framework::ProcessingContext& ctx)
       p.second->setFirstTForbit(firstTForbit);
     }
   }
+  for (auto& p : mTrackPlottersBgdZDC) {
+    if (p) {
+      p->setFirstTForbit(firstTForbit);
+    }
+  }
 
   if (mSrc[GID::MCH] == 1) {
     ILOG(Debug, Devel) << "Debug: MCH requested" << ENDM;
@@ -289,6 +735,19 @@ void TracksTask::monitorData(o2::framework::ProcessingContext& ctx)
       ILOG(Debug, Devel) << "Debug: MCH source loaded" << ENDM;
       mTrackPlotters[GID::MCH]->fillHistograms(mRecoCont);
       mTrackPlottersWithCuts[GID::MCH]->fillHistograms(mRecoCont);
+      for (auto& p : mTrackPlottersBgdZDC) {
+        p->fillHistograms(mRecoCont);
+      }
+      for (const auto& zdcIR : mBackgroundZDC) {
+        for (const auto& track : mTrackPlotters[GID::MCH]->getMuonTracks()) {
+          auto muonIR = track.first.getIRMCH();
+
+          auto diffIR = muonIR.toLong() - zdcIR.toLong();
+          if (std::abs(diffIR) < 100) {
+            mDCAvsBcZDC->Fill(diffIR, track.first.getDCAMCH());
+          }
+        }
+      }
     }
   }
   if (mSrc[GID::MCHMID] == 1) {
@@ -324,6 +783,9 @@ void TracksTask::endOfCycle()
   for (auto& p : mTrackPlottersWithCuts) {
     p.second->endOfCycle();
   }
+  for (auto& p : mTrackPlottersBgdZDC) {
+    p->endOfCycle();
+  }
 }
 
 void TracksTask::endOfActivity(const Activity& /*activity*/)
@@ -340,6 +802,9 @@ void TracksTask::reset()
   }
   for (auto& p : mTrackPlottersWithCuts) {
     p.second->reset();
+  }
+  for (auto& p : mTrackPlottersBgdZDC) {
+    p->reset();
   }
 }
 
