@@ -64,6 +64,7 @@ class TracksTask /*final*/ : public TaskInterface
   std::vector<o2::InteractionRecord> mBackgroundITS;
 
   std::unique_ptr<TH1F> mBcZDC;
+  std::unique_ptr<TH1F> mBgdZDCTrackMult;
   std::unique_ptr<TH2F> mDCAvsBcZDC;
 
   // MCH-MID

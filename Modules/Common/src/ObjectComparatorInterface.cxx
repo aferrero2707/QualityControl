@@ -21,6 +21,8 @@
 
 #include <fmt/core.h>
 
+#include <iostream>
+
 using namespace o2::quality_control;
 using namespace o2::quality_control::core;
 
@@ -52,6 +54,7 @@ std::tuple<TH1*, TH1*, bool> ObjectComparatorInterface::checkInputObjects(TObjec
     return std::make_tuple(histogram, referenceHistogram, false);
   }
 
+  std::cout << "[PIPPO] reference histogram entries: " << referenceHistogram->GetEntries() << std::endl;
   if (referenceHistogram->GetEntries() < 1) {
     message = "empty reference plot";
     return std::make_tuple(histogram, referenceHistogram, false);

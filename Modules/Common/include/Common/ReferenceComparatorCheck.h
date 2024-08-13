@@ -22,6 +22,7 @@
 #include "Common/ObjectComparatorInterface.h"
 
 #include <sstream>
+#include <unordered_map>
 
 class TPaveText;
 
@@ -49,9 +50,16 @@ class ReferenceComparatorCheck : public o2::quality_control::checker::CheckInter
   void endOfActivity(const Activity& activity) override;
 
  private:
+  Quality getSinglePlotQuality(std::shared_ptr<MonitorObject> mo, std::string& message);
+
   std::unique_ptr<ObjectComparatorInterface> mComparator;
   std::map<std::string, Quality> mQualityFlags;
   std::map<std::string, std::shared_ptr<TPaveText>> mQualityLabels;
+  quality_control::core::Activity mReferenceActivity;
+  bool mIgnorePeriodForReference{ true }; /// whether to specify the period name in the reference run query
+  bool mIgnorePassForReference{ true };   /// whether to specify the pass name in the reference run query
+  size_t mReferenceRun;
+  std::unordered_map<std::string, std::shared_ptr<MonitorObject>> mReferencePlots;
 };
 
 } // namespace o2::quality_control_modules::common
