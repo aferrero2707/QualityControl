@@ -47,7 +47,7 @@ void TrendCheck::updateScalers(uint64_t timestamp)
     return;
   }
 
-  // check time elapsed since the last update, return if smaller than mScalerUpdateIntervalMs
+  // check time elapsed since the last update, do not update if smaller than mScalerUpdateIntervalMs
   auto t1 = (timestamp > mLastScalerUpdateTimestamp) ? mLastScalerUpdateTimestamp : timestamp;
   auto t2 = (timestamp > mLastScalerUpdateTimestamp) ? timestamp : mLastScalerUpdateTimestamp;
   auto elapsed = t2 - t1;
@@ -55,14 +55,13 @@ void TrendCheck::updateScalers(uint64_t timestamp)
     return;
   }
 
-  // set database URL based on deployment mode
+  // set database URL
   auto& ccdbManager = o2::ccdb::BasicCCDBManager::instance();
   ccdbManager.setURL(mCTPScalerURL);
 
   auto runNumber = mActivity.mId;
 
   // retrieve CTP scalers object
-  // TODO: add some caching mechanism
   std::map<string, string> metadata;
   metadata["runNumber"] = std::to_string(runNumber);
   mScalers = ccdbManager.getSpecific<ctp::CTPRunScalers>(mCTPScalerPath, timestamp, metadata);
